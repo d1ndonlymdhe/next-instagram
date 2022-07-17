@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;700&display=swap'); */
+
+@font-face {
+    font-family: billabong;
+    src: url("../fonts/billabong.ttf");
+}
+
+@font-face {
+    font-family: Turpis;
+    src: url(../fonts/Turpis.ttf);
+}
+
+@font-face {
+    font-family: Roboto;
+    src: url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;700&display=swap');
+}
