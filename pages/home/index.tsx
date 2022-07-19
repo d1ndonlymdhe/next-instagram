@@ -33,7 +33,7 @@ function Home() {
     const [isSearching, setisSearching] = useState(false);
     const [activeTab, setActiveTab] = useState("home");
     const [visitingProfile, setVisitingProfile] = useState("");
-    // const router = useRouter();
+    const router = useRouter();
     useEffect(() => {
         const tabHash = getLastHash(window.location.toString());
         if (tabHash) {
@@ -95,7 +95,12 @@ function Home() {
                     {
                         activeTab === "post" &&
                         <Wrapper>
+                                <div className="grid grid-cols-[5fr_95fr] justify-center items-center w-full">
+                                    <ArrowLeftIcon onClick={() => { router.back() }}></ArrowLeftIcon>
+                                    <div className="text-center text-xl">New Post</div>
+                                </div>
                             <Post></Post>
+                                <Footer {...{ activeTab, setActiveTab }}></Footer>
                         </Wrapper>
                     }
                 </div>
@@ -366,104 +371,97 @@ function Profile() {
 }
 
 function Post() {
-
-    const router = useRouter();
-    const AddPostPicture = React.forwardRef<Blob, {}>(
-        (props, ref) => {
-            const [imageUploaded, setImageUploaded] = useState(false);
-            const [imageUrl, setImageUrl] = useState("");
-            const innerRef = useRef<HTMLInputElement>(null);
-            useEffect(() => {
-                const placeHolder = document.getElementById("imagePlaceholder")!;
-                placeHolder.style.height = window.getComputedStyle(placeHolder).width;
-            })
-            const FileInput = () => {
-                return <div id="imagePlaceholder" className="w-full flex justify-center items-center">
-                    {imageUploaded && <img alt={"preview"} src={imageUrl}></img>}
-                    <input type="file" accept={"image/jpeg,image/png,image/jpg"} ref={innerRef} className={"hidden"} id="ppUpload"></input>
-                    {!imageUploaded && <div className="w-1/5 h-1/5 border-gray-400 rounded-md border-4">
-                        <PlusIcon className="text-gray-400"></PlusIcon>
-                    </div>}
-                </div>
-            }
-
-            return (<div className={"h-full w-full flex items-center justify-center"}>
-                <div id={"formElementsWrapper"} className={"flex flex-col h-full w-full items-center justify-around "}>
-                    <div className={"w-full h-fit border-solid border-2 border-gray-400"}>
-                        <label htmlFor={"ppUpload"} className={"hover:cursor-pointer w-full"}
-                            onChange={(e) => {
-                                if (innerRef !== null) {
-                                    //@ts-ignore
-                                    const files = innerRef.current?.files
-                                    //@ts-ignore
-                                    if (files) {
-                                        const file = files[0];
-                                        const reader = new FileReader();
-                                        reader.onload = (e) => {
-                                            const img = document.createElement("img");
-                                            img.onload = (e) => {
-                                                const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-                                                console.log(img.width, img.height);
-                                                const ratio = img.width / img.height
-                                                let width = 1000;
-                                                let height = 1000 / ratio;
-                                                if (height > 1000) {
-                                                    width = 1000 * ratio;
-                                                    height = 1000;
-                                                }
-                                                canvas.width = 1000;
-                                                canvas.height = 1000
-                                                const ctx = canvas.getContext("2d");
-                                                if (ctx !== null) {
-                                                    //@ts-ignore
-                                                    ctx.filter = "blur(100px)"
-                                                    ctx.drawImage(img, 0, 0, 1000, 1000)
-                                                    //@ts-ignore
-                                                    ctx.filter = "none";
-                                                    ctx.drawImage(img, (1000 - width) / 2, (1000 - height) / 2, width, height);
-                                                    // ctx?.drawImage(img, 0, 250, 1000, 1000);
-                                                    const dataurl = canvas.toDataURL(file.type);
-                                                    console.log(dataurl);
-
-                                                    setImageUploaded(true);
-                                                    setImageUrl(dataurl);
-                                                    fetch(dataurl).then(res => {
-                                                        return res.blob();
-                                                    }).then(blob => {
-                                                        //@ts-ignore
-                                                        ref.current = blob;
-                                                        console.log(ref);
-                                                    })
-                                                }
-                                            }
-                                            //@ts-ignore
-                                            img.src = e.target.result as string;
-                                            console.log(img.src);
+    const [imageUploaded, setImageUploaded] = useState(false);
+    const [imageUrl, setImageUrl] = useState("");
+    const innerRef = useRef<HTMLInputElement>(null);
+    const captionRef = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+        const placeHolder = document.getElementById("imagePlaceholder")!;
+        placeHolder.style.height = window.getComputedStyle(placeHolder).width;
+    })
+    const FileInput = () => {
+        return <div id="imagePlaceholder" className="w-full flex justify-center items-center">
+            {imageUploaded && <img alt={"preview"} src={imageUrl}></img>}
+            <input type="file" accept={"image/jpeg,image/png,image/jpg"} ref={innerRef} className={"hidden"} id="ppUpload"></input>
+            {!imageUploaded && <div className="w-1/5 h-1/5 border-gray-400 rounded-md border-4">
+                <PlusIcon className="text-gray-400"></PlusIcon>
+            </div>}
+        </div>
+    }
+    const addPostPicture = (<div className={"h-full w-full flex items-center justify-center"}>
+        <div id={"formElementsWrapper"} className={"flex flex-col h-full w-full items-center "}>
+            <div className={"w-full h-fit border-solid border-2 border-gray-400"}>
+                <label htmlFor={"ppUpload"} className={"hover:cursor-pointer w-full h-full"}
+                    onChange={(e) => {
+                        if (innerRef !== null) {
+                            //@ts-ignore
+                            const files = innerRef.current?.files
+                            //@ts-ignore
+                            if (files) {
+                                const file = files[0];
+                                const reader = new FileReader();
+                                reader.onload = (e) => {
+                                    const img = document.createElement("img");
+                                    img.onload = (e) => {
+                                        const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+                                        console.log(img.width, img.height);
+                                        const ratio = img.width / img.height
+                                        let width = 1000;
+                                        let height = 1000 / ratio;
+                                        if (height > 1000) {
+                                            width = 1000 * ratio;
+                                            height = 1000;
                                         }
-                                        reader.readAsDataURL(file);
-                                    } else {
-                                        //do something
+                                        canvas.width = 1000;
+                                        canvas.height = 1000
+                                        const ctx = canvas.getContext("2d");
+                                        if (ctx !== null) {
+                                            //@ts-ignore
+                                            ctx.filter = "blur(100px)"
+                                            ctx.drawImage(img, 0, 0, 1000, 1000)
+                                            //@ts-ignore
+                                            ctx.filter = "none";
+                                            ctx.drawImage(img, (1000 - width) / 2, (1000 - height) / 2, width, height);
+                                            // ctx?.drawImage(img, 0, 250, 1000, 1000);
+                                            const dataurl = canvas.toDataURL(file.type);
+                                            console.log(dataurl);
+
+                                            setImageUploaded(true);
+                                            setImageUrl(dataurl);
+                                            fetch(dataurl).then(res => {
+                                                return res.blob();
+                                            }).then(blob => {
+                                                //@ts-ignore
+                                                picRef.current = blob;
+                                                console.log(picRef);
+                                            })
+                                        }
                                     }
+                                    //@ts-ignore
+                                    img.src = e.target.result as string;
+                                    console.log(img.src);
                                 }
-                            }}>
-                            <FileInput></FileInput>
-                        </label>
-                    </div>
-                    <div className="mt-4">
-                        <Input onChange={() => { }} type="text" placeholder="caption" className="text-center"></Input>
-                    </div>
-                </div>
-            </div>)
-        }
-    );
-    AddPostPicture.displayName = "AddProfilePicture";
+                                reader.readAsDataURL(file);
+                            } else {
+                                //do something
+                            }
+                        }
+                    }}>
+                    <FileInput></FileInput>
+                </label>
+            </div>
+            <div className="mt-3 w-full grid">
+                <Input onChange={() => { }} type="text" ref={captionRef} placeholder="caption" className="text-center w-[80%] ml-[10%]"></Input>
+            </div>
+        </div>
+    </div>)
     const handleSubmit = () => {
         if (picRef.current) {
             const formData = new FormData();
             if (picRef.current) {
                 formData.set("file", picRef.current);
                 formData.set("hash", Cookies.get("hash")!);
-                formData.set("caption", "abcd");
+                formData.set("caption", captionRef.current?.value || "");
                 axios.post(`${server}/upload`, formData).then(res => {
                     console.log(res.data);
                 })
@@ -471,24 +469,25 @@ function Post() {
         }
     }
     const picRef = useRef<Blob>(null);
-    return <div className="grid grid-rows-[10fr_90fr] justify-center">
-        <canvas id="canvas" className="hidden"></canvas>
-        <div className="grid grid-cols-[5fr_95fr] justify-center items-center w-full">
-            <ArrowLeftIcon onClick={() => { router.back() }}></ArrowLeftIcon>
-            <div className="text-center text-xl">New Post</div>
+    return (
+        <div className=" justify-center">
+            <canvas id="canvas" className="hidden"></canvas>
+
+            <form className="w-full h-full" onSubmit={
+                (e) => {
+                    e.preventDefault();
+                    handleSubmit();
+                }
+            }>
+                <div className="grid w-full h-full grid-rows-[95fr_5fr]">
+                    {addPostPicture}
+                    <div className="w-full grid justify-center">
+                        <Button bonClick={() => { }} type="submit" text="submit" className="w-full"></Button>
+                    </div>
+                </div>
+            </form>
         </div>
-        <form className="w-full" onSubmit={
-            (e) => {
-                e.preventDefault();
-                handleSubmit();
-            }
-        }>
-            <div className="grid grid-rows-[90fr_10fr] justify-center items-center content-center">
-                <AddPostPicture ref={picRef}></AddPostPicture>
-                <Button bonClick={() => { }} type="submit" text="submit" className="w-1/2"></Button>
-            </div>
-        </form>
-    </div>
+    )
 }
 
 
