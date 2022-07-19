@@ -375,13 +375,19 @@ function Post() {
     const [imageUrl, setImageUrl] = useState("");
     const innerRef = useRef<HTMLInputElement>(null);
     const captionRef = useRef<HTMLInputElement>(null);
+    const router = useRouter();
+    const [error, setError] = useState("");
+    const [uploading, setUploading] = useState(false);
     useEffect(() => {
-        const placeHolder = document.getElementById("imagePlaceholder")!;
-        placeHolder.style.height = window.getComputedStyle(placeHolder).width;
+        console.log("using effect")
+        window.onchange = (e) => {
+            const placeHolder = document.getElementById("imagePlaceholder")!;
+            placeHolder.style.height = window.getComputedStyle(placeHolder).width;
+        }
     })
     const FileInput = () => {
         return <div id="imagePlaceholder" className="w-full flex justify-center items-center">
-            {imageUploaded && <img alt={"preview"} src={imageUrl}></img>}
+            {imageUploaded && <img alt={"preview"} className="h-full w-full" src={imageUrl}></img>}
             <input type="file" accept={"image/jpeg,image/png,image/jpg"} ref={innerRef} className={"hidden"} id="ppUpload"></input>
             {!imageUploaded && <div className="w-1/5 h-1/5 border-gray-400 rounded-md border-4">
                 <PlusIcon className="text-gray-400"></PlusIcon>
@@ -462,31 +468,51 @@ function Post() {
                 formData.set("file", picRef.current);
                 formData.set("hash", Cookies.get("hash")!);
                 formData.set("caption", captionRef.current?.value || "");
+                setUploading(true);
                 axios.post(`${server}/upload`, formData).then(res => {
-                    console.log(res.data);
+                    if (res.data.status === "ok") {
+                        // router.back()
+                        // setUploading(false)
+                    } else {
+                        setError(res.data.message.error);
+                        setUploading(false)
+
+                    }
+                }).catch(err => {
+                    setError(err.message);
+                    setUploading(false);
                 })
             }
         }
     }
     const picRef = useRef<Blob>(null);
     return (
-        <div className=" justify-center">
-            <canvas id="canvas" className="hidden"></canvas>
-
-            <form className="w-full h-full" onSubmit={
-                (e) => {
-                    e.preventDefault();
-                    handleSubmit();
-                }
-            }>
-                <div className="grid w-full h-full grid-rows-[95fr_5fr]">
-                    {addPostPicture}
-                    <div className="w-full grid justify-center">
-                        <Button bonClick={() => { }} type="submit" text="submit" className="w-full"></Button>
-                    </div>
+        <>
+            {uploading &&
+                <div className="absolute h-screen w-screen left-0  z-10 bg-green-400 opacity-40 ">
+                    {/* <div className="h-10 w-10 bg-red-500">
+                        <Spinner></Spinner>
+                    </div> */}
                 </div>
-            </form>
-        </div>
+            }
+            <div className=" justify-center">
+                <canvas id="canvas" className="hidden"></canvas>
+                {error !== "" && <Error message={error} className="text-center"></Error>}
+                <form className="w-full h-full" onSubmit={
+                    (e) => {
+                        e.preventDefault();
+                        handleSubmit();
+                    }
+                }>
+                    <div className="grid w-full h-full grid-rows-[95fr_5fr]">
+                        {addPostPicture}
+                        <div className="w-full grid justify-center">
+                            <Button bonClick={() => { }} type="submit" text="submit" className="w-full"></Button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </>
     )
 }
 
@@ -540,7 +566,7 @@ function Footer(props: footerProps) {
 
 export function Wrapper(props: PropsWithChildren) {
 
-    return <div className="grid grid-rows-[6fr_88fr_6fr] h-full w-full max-w-[500px] bg-white box-border rounded-lg px-2 pt-2 font-Roboto">{props.children}</div>
+    return <div className="relative grid grid-rows-[6fr_88fr_6fr] h-full w-full max-w-[500px] overflow-visible bg-white box-border rounded-lg px-2 pt-2 font-Roboto">{props.children}</div>
 
 }
 
@@ -587,3 +613,5 @@ function hcf(a: number, b: number): number {
     }
     return hcf(b, a % b);
 }
+
+
