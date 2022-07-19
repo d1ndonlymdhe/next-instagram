@@ -378,16 +378,26 @@ function Post() {
     const router = useRouter();
     const [error, setError] = useState("");
     const [uploading, setUploading] = useState(false);
+    const [uploadComplete, setUploadComplete] = useState(false);
+    // let heightOfPlaceHolderChanged = false;
     useEffect(() => {
         console.log("using effect")
         window.onchange = (e) => {
             const placeHolder = document.getElementById("imagePlaceholder")!;
+            console.log(window.getComputedStyle(placeHolder).width);
             placeHolder.style.height = window.getComputedStyle(placeHolder).width;
+            console.log(placeHolder.style.height)
         }
     })
+    useEffect(() => {
+        const placeHolder = document.getElementById("imagePlaceholder")!;
+        console.log(window.getComputedStyle(placeHolder).width);
+        placeHolder.style.height = window.getComputedStyle(placeHolder).width;
+        console.log(placeHolder.style.height)
+    }, [])
     const FileInput = () => {
         return <div id="imagePlaceholder" className="w-full flex justify-center items-center">
-            {imageUploaded && <img alt={"preview"} className="h-full w-full" src={imageUrl}></img>}
+            {imageUploaded && <img alt={"preview"} className="" src={imageUrl}></img>}
             <input type="file" accept={"image/jpeg,image/png,image/jpg"} ref={innerRef} className={"hidden"} id="ppUpload"></input>
             {!imageUploaded && <div className="w-1/5 h-1/5 border-gray-400 rounded-md border-4">
                 <PlusIcon className="text-gray-400"></PlusIcon>
@@ -472,11 +482,11 @@ function Post() {
                 axios.post(`${server}/upload`, formData).then(res => {
                     if (res.data.status === "ok") {
                         // router.back()
+                        setUploadComplete(true);
                         // setUploading(false)
                     } else {
+                        // setUploading(false)
                         setError(res.data.message.error);
-                        setUploading(false)
-
                     }
                 }).catch(err => {
                     setError(err.message);
@@ -489,15 +499,25 @@ function Post() {
     return (
         <>
             {uploading &&
-                <div className="absolute h-screen w-screen left-0  z-10 bg-green-400 opacity-40 ">
-                    {/* <div className="h-10 w-10 bg-red-500">
-                        <Spinner></Spinner>
-                    </div> */}
+                <div className="absolute h-screen w-screen left-0 z-10  0 flex justify-center items-center backdrop-blur-sm">
+                    <div className="h-32 w-32 bg-gray-400  rounded-md border-2 border-black flex flex-col justify-center items-center">
+                        {!uploadComplete && <Spinner></Spinner>}
+                        {uploadComplete && <>
+                            <div>Complete</div>
+                            <Button bonClick={() => {
+                                setUploading(false);
+                                setUploadComplete(false);
+                                router.back()
+                            }} text="Go Back"></Button>
+                        </>}
+                        {
+                            error && <div className="text-red-500 text-center">{error}</div>
+                        }
+                    </div>
                 </div>
             }
             <div className=" justify-center">
                 <canvas id="canvas" className="hidden"></canvas>
-                {error !== "" && <Error message={error} className="text-center"></Error>}
                 <form className="w-full h-full" onSubmit={
                     (e) => {
                         e.preventDefault();
@@ -566,7 +586,7 @@ function Footer(props: footerProps) {
 
 export function Wrapper(props: PropsWithChildren) {
 
-    return <div className="relative grid grid-rows-[6fr_88fr_6fr] h-full w-full max-w-[500px] overflow-visible bg-white box-border rounded-lg px-2 pt-2 font-Roboto">{props.children}</div>
+    return <div className="grid grid-rows-[6fr_88fr_6fr] h-full w-full max-w-[500px] overflow-visible bg-white box-border rounded-lg px-2 pt-2 font-Roboto">{props.children}</div>
 
 }
 
