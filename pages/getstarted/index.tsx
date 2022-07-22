@@ -5,7 +5,8 @@ import axios from "axios";
 import { useState, useRef, useEffect } from 'react';
 import Cookies from 'js-cookie';
 import { ChangeEventHandler } from "react";
-const server = "http://localhost:3000/api"
+import Logo from "../../components/Logo";
+const server = "/api/"
 function Index() {
     const buttonColorBlocked = 'bg-[#afdcf9]';
     const buttonColorAvailable = 'bg-[#0095f6]';
@@ -59,7 +60,9 @@ function Index() {
         <div className='w-screen h-screen flex flex-row justify-center items-center'>
             <div className='w-[95%] h-fit flex flex-row justify-center items-center md:border-gray-200 border-solid border-2 max-w-[350px]'>
                 <div className="my-5 flex flex-col justify-center items-center content-center w-full max-w-[300px]">
-                    <div className='font-billabong text-5xl mb-10'>Instagram</div>
+                    {/* <div className='font-billabong text-5xl mb-10'>Instagram</div>
+                     */}
+                    <Logo></Logo>
                     {(loginError !== "") && <Error message={loginError} className={`my-5 w-[98%] text-center py-2`}></Error>}
                     <div id="loginContainer" className='w-full'>
                         <form onSubmit={(e) => {

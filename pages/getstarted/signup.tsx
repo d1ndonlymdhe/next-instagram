@@ -4,7 +4,10 @@ import Input from "../../components/Input";
 import Button from "../../components/Button";
 import Error from "../../components/Error";
 import Success from "../../components/Success";
-const server = "http://localhost:3000/api"
+import Logo from "../../components/Logo";
+const server = "/api/"
+
+
 export default function SignUpPage() {
     const buttonColorBlocked = 'bg-gray-200';
     const buttonColorAvialable = 'bg-green-400';
@@ -46,7 +49,9 @@ export default function SignUpPage() {
         <div className='w-screen h-screen flex flex-row justify-center items-center '>
             <div className='w-[95%] h-fit flex flex-row justify-center items-center md:border-gray-200 border-solid border-2 max-w-[350px]'>
                 <div className="my-5 flex flex-col justify-center items-center content-center w-full max-w-[300px]">
-                    <div className='font-billabong text-5xl mb-10'>Instagram</div>
+                    {/* <div className='font-billabong text-5xl mb-10'>Instagram</div>
+                     */}
+                    <Logo></Logo>
                     {(signUpError !== "") && <Error message={signUpError} className={`my-5 w-[98%] text-center py-2`}></Error>}
                     {(signUpSuccess !== "") && <Success message={signUpSuccess} className={`my-5 w-[98%] text-center py-2`}></Success>}
                     <div id="loginContainer" className='w-full'>

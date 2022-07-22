@@ -14,22 +14,39 @@ import { GlobalContextProvider, useGlobalContext, useGlobalUpdateContext } from 
 import { useRouter } from "next/router";
 import { server } from "..";
 import ProfilePicture from "../../components/ProfilePicture";
+import Logo from "../../components/Logo";
+import { NextApiRequest, NextApiResponse } from "next";
+import fs from "fs";
 // import Profile from "./[profile]"
 type set<T> = React.Dispatch<React.SetStateAction<T>>
 // const server = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api";
 
+type post = {
+    caption: string;
+    likes: number;
+    likedBy: string[];
+    postedBy: string;
+    postedByUsername: string;
+    postedOn: number;
+    imageUrl: string;
+    profilePictureUrl: string;
+    _id: string;
 
+}
+type AppPropsType = { posts: post[] };
 
-export default function App() {
+export default function App(props: AppPropsType) {
+    const { posts } = props;
     return <GlobalContextProvider>
-        <Home />
+        <Home posts={props.posts} />
     </GlobalContextProvider>
 }
 
-function Home() {
+function Home(props: AppPropsType) {
     const globalContext = useGlobalContext();
     const globalUpdateContext = useGlobalUpdateContext();
     const [isSignedIn, setIsSignedIn] = useState(false);
+    const { posts } = props;
     const [isSearching, setisSearching] = useState(false);
     const [activeTab, setActiveTab] = useState("home");
     const [visitingProfile, setVisitingProfile] = useState("");
@@ -47,22 +64,31 @@ function Home() {
         if (hash === undefined) {
             window.location.href = "/"
         }
+
         axios.post(`${server}/userinfo`, { hash: hash }).then(async (res) => {
             if (res.data.status === "ok") {
                 if (res.data.message.firstLogin) {
                     window.location.href = "/setup";
+                } else {
+
+                    const newState = { ...globalContext, username: res.data.message.username };
+                    const imgRes = await fetch(`${server}/getProfilePic?username=${res.data.message.username}`);
+                    if (imgRes) {
+                        const img = await imgRes.blob();
+                        newState.ppBlobUrl = URL.createObjectURL(img);
+                    }
+                    console.log(posts);
+                    newState.feedResults = posts;
+                    // axios.get(`${server}/feed`, { params: { hash } }).then(res => {
+                    //     const posts = res.data.posts;
+                    //     newState.feedResults = posts;
+                    // })
+                    // fetch(`${server}/getProfilePic?username=${res.data.message.username}`).then(res => res.blob())
+                    globalUpdateContext(newState);
+                    setIsSignedIn(true);
                 }
-                const newState = { ...globalContext, username: res.data.message.username };
-                // const img = (await (await fetch(`${server}/getProfilePic?username=${res.data.message.username}`)).body).blob();
-                const imgRes = await fetch(`${server}/getProfilePic?username=${res.data.message.username}`);
-                // const imgBody= imgRes.body;
-                if (imgRes) {
-                    const img = await imgRes.blob();
-                    newState.ppBlobUrl = URL.createObjectURL(img);
-                }
-                fetch(`${server}/getProfilePic?username=${res.data.message.username}`).then(res => res.blob())
-                globalUpdateContext(newState);
-                setIsSignedIn(true);
+            } else {
+                window.location.href = "/getstarted";
             }
         })
     }, []);
@@ -88,7 +114,9 @@ function Home() {
                     {
                         activeTab === "profile" &&
                         <Wrapper>
+
                             <Profile></Profile>
+                                <Footer {...{ activeTab, setActiveTab }}></Footer>
                             {/* <Profile></Profile> */}
                         </Wrapper>
                     }
@@ -99,7 +127,7 @@ function Home() {
                                     <ArrowLeftIcon onClick={() => { router.back() }}></ArrowLeftIcon>
                                     <div className="text-center text-xl">New Post</div>
                                 </div>
-                            <Post></Post>
+                                <CreatePost></CreatePost>
                                 <Footer {...{ activeTab, setActiveTab }}></Footer>
                         </Wrapper>
                     }
@@ -112,6 +140,62 @@ function Home() {
     }
 }
 
+function Feed() {
+    const globalContext = useGlobalContext();
+    const posts = globalContext.feedResults;
+    return <div className="h-full w-full overflow-y-scroll overflow-x-hidden">
+
+        {
+            posts.map((post) => {
+                return <Post key={uuid()} post={post}></Post>
+            })
+        }
+    </div>
+}
+
+function Post(props: { post: post }) {
+    useEffect(() => {
+        const postPictures = document.getElementsByClassName("postPicture");
+        for (let i = 0; i < postPictures.length; i++) {
+            const postPicture = postPictures[i];
+            //@ts-ignore
+            postPictures[i].style.height = window.getComputedStyle(postPictures[0]).width;
+        }
+    })
+    const { post } = props;
+    return <div className="grid grid-rows-[1fr_auto_1fr] items-center h-fit w-full my-2 gap-2 ">
+        <ProfilePictureAndUsername {...{ profilePictureUrl: post.profilePictureUrl, username: post.postedByUsername }}></ProfilePictureAndUsername>
+        <div className="postPicture w-full">
+            <img src={post.imageUrl}></img>
+        </div>
+        <div className="h-full w-full grid grid-rows-2">
+            <div className="h-full w-full grid grid-cols-[1fr_9fr] items-center">
+                <HeartIcon></HeartIcon>
+                <div className="underline hover:cursor-pointer ml-2">
+                    Liked By
+                </div>
+            </div>
+            <div className="pl-2">
+                {post.caption}
+            </div>
+        </div>
+    </div>
+}
+function ProfilePictureAndUsername(props: { profilePictureUrl: string, username: string }) {
+    const router = useRouter();
+    const { profilePictureUrl, username } = props;
+    const clickHandler = () => {
+        router.push(`?username=${username}#profile`, `?username=${username}#profile`, { scroll: true })
+    }
+    return <div onClick={() => { clickHandler() }} className="h-full w-full grid grid-cols-[1fr_9fr] items-center hover:cursor-pointer">
+        <div className="w-full">
+            <img src={profilePictureUrl} className="rounded-full border-2 border-black"></img>
+        </div>
+        <div onClick={() => { clickHandler() }} className="h-full w-full ml-2 grid items-center hover:cursor-pointer">
+            {username}
+        </div>
+    </div>
+}
 type SearchPropType = {
     setVisitingProfile: set<string>
 }
@@ -326,7 +410,8 @@ function Profile() {
             </div>
         </>
     }
-    return <div className="h-full w-full grid grid-cols-[5fr-15fr-80fr] gap-5">
+
+    return <>
         {/*Topbar without logout button*/}
         {(username !== selfUsername) &&
             <div className="h-full w-full items-center grid grid-cols-[10fr_90fr] gap-5">
@@ -350,27 +435,29 @@ function Profile() {
                 }}></LogoutIcon>
             </div>
         }
-        <div className="grid grid-cols-[100px_auto]">
-            <ProfilePicture src={ppUrl}></ProfilePicture>
-            <div className="flex flex-wrap justify-around ml-5">
-                <FollowingAndFollowerCount></FollowingAndFollowerCount>
-                <div className="flex justify-center items-center w-[200%] my-4 overflow-x-auto">{bio}</div>
-                {(username !== selfUsername) &&
-                    <Button bonClick={(e) => {
-                        if (!isfollowing) {
-                            follow(username);
-                            setFollowersCount(followersCount + 1);
-                        } else {
-                            unFollow(username);
-                            setFollowersCount(followersCount - 1);
-                        }
-                    }} text={isfollowing ? "following" : "follow"} className={`w-full ${!isfollowing && "hover:bg-blue-500"} ${isfollowing && "hover:bg-gray-400"}`}></Button>}
+        <div className="h-full w-full mt-5 gap-5">
+            <div className="grid grid-cols-[100px_auto]">
+                <ProfilePicture src={ppUrl}></ProfilePicture>
+                <div className="flex flex-wrap justify-around ml-5">
+                    <FollowingAndFollowerCount></FollowingAndFollowerCount>
+                    <div className="flex justify-center items-center w-[200%] my-4 overflow-x-auto">{bio}</div>
+                    {(username !== selfUsername) &&
+                        <Button bonClick={(e) => {
+                            if (!isfollowing) {
+                                follow(username);
+                                setFollowersCount(followersCount + 1);
+                            } else {
+                                unFollow(username);
+                                setFollowersCount(followersCount - 1);
+                            }
+                        }} text={isfollowing ? "following" : "follow"} className={`w-full ${!isfollowing && "hover:bg-blue-500"} ${isfollowing && "hover:bg-gray-400"}`}></Button>}
+                </div >
             </div >
         </div >
-    </div >
+    </>
 }
 
-function Post() {
+function CreatePost() {
     const [imageUploaded, setImageUploaded] = useState(false);
     const [imageUrl, setImageUrl] = useState("");
     const innerRef = useRef<HTMLInputElement>(null);
@@ -381,9 +468,9 @@ function Post() {
     const [uploadComplete, setUploadComplete] = useState(false);
     // let heightOfPlaceHolderChanged = false;
     useEffect(() => {
-        console.log("using effect")
-        window.onchange = (e) => {
+        window.onresize = (e) => {
             const placeHolder = document.getElementById("imagePlaceholder")!;
+            console.log("placeholder = ", placeHolder)
             console.log(window.getComputedStyle(placeHolder).width);
             placeHolder.style.height = window.getComputedStyle(placeHolder).width;
             console.log(placeHolder.style.height)
@@ -540,7 +627,9 @@ function Post() {
 function Topbar() {
     return <div className="w-full h-full overflow-hidden  content-center flex items-center px-3">
         <div className="w-full grid grid-cols-[7fr_2fr] content-center">
-            <div className="font-billabong text-4xl">Instagram</div>
+            {/* <div className="font-billabong text-4xl">Instagram</div>
+             */}
+            <Logo></Logo>
             <div className="grid grid-cols-2 gap-2 content-center">
                 <div>
                     <HeartIcon></HeartIcon>
@@ -556,16 +645,6 @@ function Topbar() {
 }
 
 
-function Feed() {
-    return <div className="h-full w-full grid grid-rows-[1fr_8fr]">
-        <div>
-            Stories
-        </div>
-        <div>
-            Feed
-        </div>
-    </div>
-}
 
 
 type footerProps = {
@@ -575,7 +654,7 @@ type footerProps = {
 
 function Footer(props: footerProps) {
     const { activeTab, setActiveTab } = props;
-    return <div className="grid grid-cols-5 gap-16  w-full h-full items-center justify-center">
+    return <div className="grid grid-cols-5 gap-16  w-full h-full items-center justify-center align-baseline sticky">
         {ReturnIconForFooter(activeTab, "home", HomeIcon, HomeIconSolid)}
         {ReturnIconForFooter(activeTab, "search", SearchIcon, SearchIconSolid)}
         {ReturnIconForFooter(activeTab, "post", PlusIcon, PlusIconSolid)}
@@ -586,7 +665,7 @@ function Footer(props: footerProps) {
 
 export function Wrapper(props: PropsWithChildren) {
 
-    return <div className="grid grid-rows-[6fr_88fr_6fr] h-full w-full max-w-[500px] overflow-visible bg-white box-border rounded-lg px-2 pt-2 font-Roboto">{props.children}</div>
+    return <div className="grid grid-rows-[6%_88%_6%] h-full w-full max-w-[500px] overflow-hidden bg-white box-border rounded-lg px-2 pt-2 font-Roboto">{props.children}</div>
 
 }
 
@@ -635,3 +714,25 @@ function hcf(a: number, b: number): number {
 }
 
 
+export async function getServerSideProps(context: { req: NextApiRequest, res: NextApiResponse }) {
+    const hash = context.req.cookies.hash!;
+    const server = "http://localhost:3000"
+    let feed: post[] = [];
+    const res = await fetch(`${server}/api/feed?hash=${hash}`);
+    const data: { status: string, posts: post[] } = await res.json();
+    let posts = data.posts;
+    console.log(posts);
+    if (posts) {
+        posts.map(post => {
+            post.imageUrl = `${server}/api/getPostPic?postId=${post._id}&uploaderId=${post.postedBy}`
+            post.profilePictureUrl = `${server}/api/getProfilePic?username=${post.postedByUsername}`
+            return post;
+        })
+    } else {
+        posts = [];
+    }
+
+    return {
+        props: { posts: posts }
+    }
+}

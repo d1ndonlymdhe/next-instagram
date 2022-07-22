@@ -10,10 +10,11 @@ export default async function upload(req: NextApiRequest, res: NextApiResponse) 
         if (err) { console.log(err) }
         else {
             const { hash, caption } = <{ hash: string, caption: string }>fields;
+            const postedOn = new Date().getTime();
             const file = <formidable.File>files.file;
             const user = await findUser(undefined, hash);
             if (user) {
-                const post = await newPost(user._id, caption);
+                const post = await newPost(user._id, postedOn, caption);
                 const path = `./files/${user._id}/posts/${post._id}`;
                 fs.readFile(file.filepath, (err, data) => {
                     if (err) {

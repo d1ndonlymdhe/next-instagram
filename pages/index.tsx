@@ -17,6 +17,9 @@ const Home: NextPage = () => {
           } else {
             window.location.href = "/home";
           }
+        } else {
+          window.location.href = "/getstarted";
+
         }
       })
     } else {

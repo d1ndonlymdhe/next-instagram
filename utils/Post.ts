@@ -11,6 +11,10 @@ const postSchema = new Schema({
     likes: {
         type: Number,
         default: 0
+    },
+    postedOn: {
+        type: Number,
+        default: 0,
     }
 })
 

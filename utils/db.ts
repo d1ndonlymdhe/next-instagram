@@ -33,9 +33,9 @@ export async function newUser(username: string, password: string) {
     return user;
 }
 
-export async function newPost(postedBy: string, caption?: string) {
+export async function newPost(postedBy: string, postedOn: number, caption?: string) {
     const connection = await connect();
-    const post = new Post({ caption: caption || "", postedBy: postedBy }) as post;
+    const post = new Post({ caption: caption || "", postedBy: postedBy, postedOn: postedOn }) as post;
     await post.save();
     return post;
 }

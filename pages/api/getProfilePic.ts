@@ -10,7 +10,6 @@ export default async function getProfilePicture(req: NextApiRequest, res: NextAp
             const id = user._id;
             const file = `./files/${id}/profilepicture.png`;
             fs.createReadStream(file).pipe(res);
-            // res.sendFile(file);
         } else {
             res.send("not found")
         }

@@ -5,7 +5,7 @@ import Error from "../../components/Error";
 import Logo from "../../components/Logo";
 import Button from "../../components/Button";
 import React from "react";
-const server = "http://localhost:3000/api"
+const server = "/api/"
 export default function Setup() {
     const [username, setUserName] = useState("");
     const [error, setError] = useState("");
@@ -86,7 +86,7 @@ export default function Setup() {
                 <div
                     className={"my-5 grid grid-rows-[2fr_7fr_1fr] justify-center items-center content-center w-full max-w-[300px]"}>
                     <div id="topbar" className="flex w-full h-full mt-2 justify-center">
-                        <Logo className="h-full w-auto text-3xl"></Logo>
+                        <Logo></Logo>
                     </div>
                     {(page === 1) && <Welcome username={username}></Welcome>}
                     {(page === 2) && <AddBio ref={bioTextAreaRef}></AddBio>}

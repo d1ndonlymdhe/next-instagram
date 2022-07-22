@@ -1,9 +1,10 @@
-import react from "react"
 type LogoPropsTypes = {
     className?: string;
 }
 export default function Logo(props: LogoPropsTypes) {
     const { className } = props;
-    return <span className={`font-billabong flex justify-center items-center h-full ${className}`}>
-        <div className="text-[3rem]">Instagram</div></span>
+    return <svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" width="100" height="80" viewBox="0 10 100 80">
+        <image id="Instagram" x="1" y="37" width="98" height="32" xlinkHref="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGIAAAAgCAYAAADpNa1pAAAEMklEQVRoge1ai1HjMBBd6MAt6EowJfhKMCWYEkwJTglJCaYEU4JdglNCKOEYz+zevHusZOfA4ATejIdEXq1W+5eCLEQrIn/gaZdOPAMnERlFpFqB91WgISOsZYg1eW8etzMCFiJSi8iDiNyIyFHHsxU39nIhuvtQzBliShPPInLQ78cZ+v9FgHlrrbFppAwxeX2phjCElTazZoRdPCrN2QVsZNSx7gM2Vzu1x3u+Rc1IRYR5/1o5e6d15xFS34QnEfml76bnXiMGO7eGHITRgsPUzntzgrkOrdRubqLtI7xWR6cCYDryIqJTYfN3CFSCkj0Fc/uc6rD2Edra4ZcyRJ6IUt5rSvZFmCvWsqAuZPosMUSuChlJmakakauhRCPnRiPmRcdxbgDlPintnX5vQEaLcjRaT3utgfZOee10rBQfKR1gKn7jAClDmLBzCmYlVpHFWt1sM2NcToW26aO20fbZmogsQnuvn4cIrWhatC4twNoZ8HpUHqLG9fgwzNFOMI4R2fCElCFs8XNSToBF0BA1bOwZvPpRH9wYG8LC/YnGPWWYrAfnnVBrfFQPt7FnWBtTDK67pLurwNGMniP3jXwpQxwg/FO5Dxeo4HsWocEzyW7BucE2NdCYyTQCfzMEttwZ0KJ8GAkefxtDxzBnqjyvVni6Kh0n+AdmiAyKM+ZRy4le4caN2t+KNmQ4UNgvRe0ojnkMDm+k5bzPig/OnMYZ89Zl/pbSds4YRgHynfQdzBCxdnCnuXbJabfQRU2IF3r3W/nsE8WOgWkR+YXIeDZDO+gTnBTotek8FlvXUOg46quEdT3UaAjsSngC9vW2uP1FwQql9ZRRQfdx0MIdC21DlkiJ59Qtz5g5pC92shjvWGeIUZJTWhTVLdc3xLTH4RbazwG6ktiGvNBHeGki6FzzlgeNjlpT3kTnpRKOGlQCGsgr9FgsuXuzqB1oDhbWuTWRnsdZNwU1Ajz3iO/4wOMBe24TNjgHnRxaNz4Rd6Ckns4RdoK19nZUmYxur/OsH8ezSKDzie2lA1liVzMN8A9KWxLvALxHoM9IDmvbC/iOLeyJ5vbsKP3M/VEFjEeyLArBCxp97giMBylxfvewbih2J1XSOqcIbQcG8fbIztSRY/A7XoPlLmg+nv751D+yMDVMwnDMnckc6rbJnubVFGWZIzQf7vYgIMrBVxwWHQVs2FJETRsNM4YQcDS8qikcQ9u7lvihjnLii8AMMUa60L/Cpp4vufR6JzCae2phNy107xiiObNT2Qoq9bwTRdIPPhG5GiBQgd0klty+XipautSTLf8SeK2GsFrGl2s/hvhkVIkb2E3iGg2Ra13wrhU2+x8i12gI7+Jt87hGQwS6uMwu4dxwrTUCizJeyn3Lf177KrRw1cCXckt/B/nBB6CIXNGctty+XismY/BF4XajQUReAbjEwkYsJ80TAAAAAElFTkSuQmCC" />
+    </svg>
+
 }

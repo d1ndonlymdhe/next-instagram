@@ -32,7 +32,7 @@ export default function signup(req: NextApiRequest, res: NextApiResponse) {
                 text: "Username Taken"
             }
         }
-        res.send(JSON.stringify({ status, message }));
+        res.status(200).json({ status, message });
         return;
     })
 }
