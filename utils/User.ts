@@ -29,7 +29,8 @@ const userSchema = new Schema({
     bio: {
         type: String,
         default: ""
-    }
+    },
+    posts: [mongoose.SchemaTypes.ObjectId]
 })
 
 const User = models.User || model("User", userSchema);

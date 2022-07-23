@@ -9,6 +9,7 @@ export type user = {
     hash: string;
     bio?: string;
     _id: string;
+    posts: string[];
     save: () => void
 }
 
@@ -17,6 +18,7 @@ export type post = {
     likes: number;
     likedBy: string[];
     postedBy: string;
+    uploader: user;
     postedByUsername: string;
     postedOn: number;
     _id: string;

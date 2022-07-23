@@ -15,6 +15,8 @@ export default async function upload(req: NextApiRequest, res: NextApiResponse) 
             const user = await findUser(undefined, hash);
             if (user) {
                 const post = await newPost(user._id, postedOn, caption);
+                user.posts.push(post._id);
+                user.save()
                 const path = `./files/${user._id}/posts/${post._id}`;
                 fs.readFile(file.filepath, (err, data) => {
                     if (err) {
@@ -25,15 +27,15 @@ export default async function upload(req: NextApiRequest, res: NextApiResponse) 
                                 console.log(err);
                             } else {
                                 if (file.originalFilename) {
-                                    if (getExtension(file.originalFilename) !== "png") {
+                                    if (getExtension(file.originalFilename) !== "jpg") {
                                         Jimp.read(data, (err, image) => {
                                             if (!err) {
-                                                image.write(`${path}/image.png`);
+                                                image.write(`${path}/image.jpg`);
                                                 res.status(200).json({ status: "ok" });
                                             }
                                         })
                                     } else {
-                                        fs.writeFile(`${path}/image.png`, data, (err) => {
+                                        fs.writeFile(`${path}/image.jpg`, data, (err) => {
                                             if (err) {
                                                 console.log(err);
                                             } else {

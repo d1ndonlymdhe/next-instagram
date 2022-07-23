@@ -1,5 +1,4 @@
 import { Schema, model, models } from "mongoose";
-import User from "./User";
 import mongoose from "mongoose";
 const postSchema = new Schema({
     caption: {

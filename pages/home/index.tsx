@@ -16,7 +16,6 @@ import { server } from "..";
 import ProfilePicture from "../../components/ProfilePicture";
 import Logo from "../../components/Logo";
 import { NextApiRequest, NextApiResponse } from "next";
-import fs from "fs";
 import { connect } from "../../utils/db";
 import User from "../../utils/User";
 import { user } from "../../utils/type";
@@ -37,7 +36,7 @@ type post = {
     _id: string;
 
 }
-type AppPropsType = { posts: post[] };
+type AppPropsType = { posts: string };
 
 export default function App(props: AppPropsType) {
     const { posts } = props;
@@ -81,13 +80,24 @@ function Home(props: AppPropsType) {
                         const img = await imgRes.blob();
                         newState.ppBlobUrl = URL.createObjectURL(img);
                     }
-                    console.log(posts);
-                    newState.feedResults = posts;
-                    // axios.get(`${server}/feed`, { params: { hash } }).then(res => {
-                    //     const posts = res.data.posts;
-                    //     newState.feedResults = posts;
-                    // })
-                    // fetch(`${server}/getProfilePic?username=${res.data.message.username}`).then(res => res.blob())
+                    // console.log(JSON.parse(posts));
+                    if (posts) {
+                        newState.feedResults = JSON.parse(posts);
+                    } else {
+                        console.log("no posts")
+                        const res = await axios.get(`${server}/feed`, { params: { hash } })
+                        console.log(res.data)
+                        if (res.data.status !== "error") {
+                            newState.feedResults = res.data.posts;
+                        } else {
+                            newState.feedResults = [];
+                        }
+                    }
+                    newState.feedResults = newState.feedResults.map((post) => {
+                        post.profilePictureUrl = `${server}/getProfilePic?username=${post.postedByUsername}`;
+                        post.imageUrl = `${server}/getPostPic?postId=${post._id}&uploaderId=${post.postedBy}`;
+                        return post;
+                    })
                     globalUpdateContext(newState);
                     setIsSignedIn(true);
                 }
@@ -715,29 +725,6 @@ function hcf(a: number, b: number): number {
 }
 
 
-// export async function getServerSideProps(context: { req: NextApiRequest, res: NextApiResponse, params: any }) {
-//     const hash = context.req.cookies.hash!;
-//     // const server = "http://localhost:3000";
-//     const server = process.env.SERVER_URL;
-//     const res = await fetch(`${server}/api/feed?hash=${hash}`);
-//     const data: { status: string, posts: post[] } = await res.json();
-//     let posts = data.posts;
-//     console.log(posts);
-//     if (posts) {
-//         posts.map(post => {
-//             post.imageUrl = `${server}/api/getPostPic?postId=${post._id}&uploaderId=${post.postedBy}`
-//             post.profilePictureUrl = `${server}/api/getProfilePic?username=${post.postedByUsername}`
-//             return post;
-//         })
-//     } else {
-//         posts = [];
-//     }
-
-//     return {
-//         props: { posts: posts }
-//     }
-// }
-
 export async function getServerSideProps(context: { req: NextApiRequest }) {
     const hash = context.req.cookies.hash!;
     let flatPost: post[] = [];
@@ -746,9 +733,27 @@ export async function getServerSideProps(context: { req: NextApiRequest }) {
         const reqUser = await User.findOne({ hash: hash }, "followingUsers") as user;
         if (reqUser) {
             const following = reqUser.followingUsers;
-            if (following.length !== 0) {
-                const posts = await Post.find({ postedBy: { $in: following } })
-                flatPost = flatPost.concat(posts);
+            if (following.length > 0) {
+                const postByFollowing = await User.find({ _id: { $in: following } }, "username posts") as user[];
+                for (let i = 0; i < postByFollowing.length; i++) {
+                    let posts = await Post.aggregate([{ $match: { _id: { $in: postByFollowing[i].posts } } }]).limit(10).sort({ postedOn: -1 });
+                    posts = posts.map(post => {
+                        post.postedByUsername = postByFollowing[0].username;
+                        return post;
+                    })
+                    flatPost.push(...posts);
+                }
+                return {
+                    props: { posts: JSON.stringify(flatPost) }
+                }
+            } else {
+                return {
+                    props: { posts: "[]" }
+                }
+            }
+        } else {
+            return {
+                props: { posts: "[]" }
             }
         }
     }

@@ -11,29 +11,20 @@ export default async function getPosts(req: NextApiRequest, res: NextApiResponse
     const connection = await connect();
     if (hash) {
         const reqUser = await User.findOne({ hash: hash }, "followingUsers") as user;
-        // console.log(reqUser);
         if (reqUser) {
             const following = reqUser.followingUsers;
-
-            if (following.length !== 0) {
-                const posts: post[][] = []
-                for (let i = 0; i < following.length; i++) {
-                    let newPosts = await Post.find({ postedBy: following[i] }) as post[];
-                    const followingUser = await User.findById(following[i], "username") as user;
-                    // console.log(followingUser);
-                    const followingUsername = followingUser.username;
-                    newPosts = newPosts.map(newPost => {
-                        const { _id, caption, likedBy, likes, postedBy, postedOn } = newPost;
-                        const tempPost: post = { _id, caption, likedBy, likes, postedBy, postedOn, postedByUsername: followingUsername, save: () => { } }
-                        return tempPost;
+            if (following.length > 0) {
+                const postByFollowing = await User.find({ _id: { $in: following } }, "username posts") as user[];
+                for (let i = 0; i < postByFollowing.length; i++) {
+                    let posts = await Post.aggregate([{ $match: { _id: { $in: postByFollowing[i].posts } } }])
+                    posts = posts.map(post => {
+                        post.postedByUsername = postByFollowing[0].username;
+                        return post;
                     })
-                    posts.push(newPosts);
-                    if (i == following.length - 1) {
-                        flatPost = posts.flat();
-                        // console.log({ status: "ok", posts: flatPost })
-                        res.status(200).json({ status: "ok", posts: flatPost });
-                    }
+                    flatPost.push(...posts);
                 }
+                console.log("flatPost", flatPost);
+                res.status(200).json({ status: "ok", posts: flatPost });
             } else {
                 res.status(200).json({ status: "error", message: "Not Following AnyOne" })
             }
