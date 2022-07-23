@@ -17,6 +17,10 @@ import ProfilePicture from "../../components/ProfilePicture";
 import Logo from "../../components/Logo";
 import { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
+import { connect } from "../../utils/db";
+import User from "../../utils/User";
+import { user } from "../../utils/type";
+import Post from "../../utils/Post";
 // import Profile from "./[profile]"
 type set<T> = React.Dispatch<React.SetStateAction<T>>
 // const server = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api";
@@ -147,13 +151,13 @@ function Feed() {
 
         {
             posts.map((post) => {
-                return <Post key={uuid()} post={post}></Post>
+                return <FeedPost key={uuid()} post={post}></FeedPost>
             })
         }
     </div>
 }
 
-function Post(props: { post: post }) {
+function FeedPost(props: { post: post }) {
     useEffect(() => {
         const postPictures = document.getElementsByClassName("postPicture");
         for (let i = 0; i < postPictures.length; i++) {
@@ -300,7 +304,6 @@ function Search(props: SearchPropType) {
                                             if (res.data.status === "ok") {
                                                 const tempResults: (typeof searchResults) = Object.assign([], searchResults);
                                                 tempResults[searchResults.indexOf(result)].isFollowing = true;
-                                                console.table(tempResults);
                                                 setSearchResults(tempResults);
                                                 setForReRender(!forRerender);
                                             }
@@ -310,10 +313,8 @@ function Search(props: SearchPropType) {
                                             if (res.data.status === "ok") {
                                                 const tempResults: (typeof searchResults) = Object.assign([], searchResults);
                                                 tempResults[searchResults.indexOf(result)].isFollowing = false;
-                                                console.table(tempResults);
                                                 setSearchResults(tempResults);
                                                 setForReRender(!forRerender);
-
                                             }
                                         })
                                     }
@@ -714,25 +715,41 @@ function hcf(a: number, b: number): number {
 }
 
 
-export async function getServerSideProps(context: { req: NextApiRequest, res: NextApiResponse }) {
-    const hash = context.req.cookies.hash!;
-    const server = "http://localhost:3000"
-    let feed: post[] = [];
-    const res = await fetch(`${server}/api/feed?hash=${hash}`);
-    const data: { status: string, posts: post[] } = await res.json();
-    let posts = data.posts;
-    console.log(posts);
-    if (posts) {
-        posts.map(post => {
-            post.imageUrl = `${server}/api/getPostPic?postId=${post._id}&uploaderId=${post.postedBy}`
-            post.profilePictureUrl = `${server}/api/getProfilePic?username=${post.postedByUsername}`
-            return post;
-        })
-    } else {
-        posts = [];
-    }
+// export async function getServerSideProps(context: { req: NextApiRequest, res: NextApiResponse, params: any }) {
+//     const hash = context.req.cookies.hash!;
+//     // const server = "http://localhost:3000";
+//     const server = process.env.SERVER_URL;
+//     const res = await fetch(`${server}/api/feed?hash=${hash}`);
+//     const data: { status: string, posts: post[] } = await res.json();
+//     let posts = data.posts;
+//     console.log(posts);
+//     if (posts) {
+//         posts.map(post => {
+//             post.imageUrl = `${server}/api/getPostPic?postId=${post._id}&uploaderId=${post.postedBy}`
+//             post.profilePictureUrl = `${server}/api/getProfilePic?username=${post.postedByUsername}`
+//             return post;
+//         })
+//     } else {
+//         posts = [];
+//     }
 
-    return {
-        props: { posts: posts }
+//     return {
+//         props: { posts: posts }
+//     }
+// }
+
+export async function getServerSideProps(context: { req: NextApiRequest }) {
+    const hash = context.req.cookies.hash!;
+    let flatPost: post[] = [];
+    const connection = await connect();
+    if (hash) {
+        const reqUser = await User.findOne({ hash: hash }, "followingUsers") as user;
+        if (reqUser) {
+            const following = reqUser.followingUsers;
+            if (following.length !== 0) {
+                const posts = await Post.find({ postedBy: { $in: following } })
+                flatPost = flatPost.concat(posts);
+            }
+        }
     }
 }

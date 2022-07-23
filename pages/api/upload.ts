@@ -51,6 +51,7 @@ export default async function upload(req: NextApiRequest, res: NextApiResponse) 
                 res.status(200).json({ status: "error" });
             }
         }
+
     });
 
 }

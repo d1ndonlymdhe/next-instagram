@@ -31,7 +31,7 @@ export default function login(req: NextApiRequest, res: NextApiResponse) {
 
                 } else {
                     message = {
-                        text: "Incorrect Username"
+                        text: "Incorrect Password"
                     }
                     res.status(200).json({ status, message });
 

@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from 'react';
 import Cookies from 'js-cookie';
 import { ChangeEventHandler } from "react";
 import Logo from "../../components/Logo";
+import { useRouter } from "next/router";
 const server = "/api/"
 function Index() {
     const buttonColorBlocked = 'bg-[#afdcf9]';
@@ -17,11 +18,11 @@ function Index() {
     const [loginError, setLoginError] = useState("");
     const [loginSuccess, setLoginSuccess] = useState(false);
     const [hash, setHash] = useState("");
-
+    const router = useRouter()
     useEffect(() => {
         if (loginSuccess) {
             Cookies.set("hash", hash, { expires: 30 });
-            window.location.href = "/";
+            router.push("/");
         }
     }, [loginSuccess, hash]);
     const setLoginButtonColorOnChange = (e: ChangeEventHandler) => {
@@ -38,12 +39,14 @@ function Index() {
             const username = usernameRef.current?.value;
             const password = passwordRef.current?.value;
             if (username !== undefined && password !== undefined) {
+                console.log("ok");
                 axios.post(`${server}/login`, { username: username, password: password }).then(res => {
                     if (res.data.status === "error") {
                         setLoginError(res.data.message.text);
                     } else {
                         setLoginError("");
                         setLoginSuccess(true);
+                        console.log(loginSuccess)
                         setHash(res.data.message.hash);
                     }
                 });

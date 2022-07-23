@@ -26,7 +26,6 @@ export function updateUser(username: string, options: updateUserOptionsType) {
 export async function newUser(username: string, password: string) {
     const user = connect().then(async () => {
         const user = new User({ username: username, password: password }) as user;
-        //@ts-ignore
         await user.save();
         return user;
     })

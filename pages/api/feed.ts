@@ -24,7 +24,7 @@ export default async function getPosts(req: NextApiRequest, res: NextApiResponse
                     const followingUsername = followingUser.username;
                     newPosts = newPosts.map(newPost => {
                         const { _id, caption, likedBy, likes, postedBy, postedOn } = newPost;
-                        const tempPost: post = { _id, caption, likedBy, likes, postedBy, postedOn, postedByUsername: followingUsername };
+                        const tempPost: post = { _id, caption, likedBy, likes, postedBy, postedOn, postedByUsername: followingUsername, save: () => { } }
                         return tempPost;
                     })
                     posts.push(newPosts);

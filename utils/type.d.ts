@@ -9,7 +9,7 @@ export type user = {
     hash: string;
     bio?: string;
     _id: string;
-    save?: () => {}
+    save: () => void
 }
 
 export type post = {
@@ -20,7 +20,7 @@ export type post = {
     postedByUsername: string;
     postedOn: number;
     _id: string;
-    save?: () => {}
+    save: () => void
 }
 
 export type updateUserOptionsType = {

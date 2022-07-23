@@ -3,6 +3,7 @@ import { findUser, newUser } from "../../utils/db";
 import fs from "fs";
 import { signUpReq, messageType } from "../../apiTypes/types";
 export default function signup(req: NextApiRequest, res: NextApiResponse) {
+    console.log("ok");
     const { username, password } = <signUpReq>req.body;
     let status = "error";
     let message: messageType = {
