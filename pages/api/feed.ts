@@ -16,9 +16,18 @@ export default async function getPosts(req: NextApiRequest, res: NextApiResponse
             if (following.length > 0) {
                 const postByFollowing = await User.find({ _id: { $in: following } }, "username posts") as user[];
                 for (let i = 0; i < postByFollowing.length; i++) {
-                    let posts = await Post.aggregate([{ $match: { _id: { $in: postByFollowing[i].posts } } }])
+                    let posts: post[] = await Post.aggregate([{ $match: { _id: { $in: postByFollowing[i].posts } } }]);
                     posts = posts.map(post => {
                         post.postedByUsername = postByFollowing[0].username;
+                        //@ts-ignore
+                        post.likedByUsernames = [];
+                        post.likedBy.forEach(async likedBy => {
+                            const likedByUser: user = await User.findById(likedBy, "username").lean();
+                            //@ts-ignore
+                            //@ts-ignore
+                            post.likedByUsernames.push(likedByUser.username);
+                        })
+                        console.log("post = ", post);
                         return post;
                     })
                     flatPost.push(...posts);

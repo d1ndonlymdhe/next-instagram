@@ -17,6 +17,7 @@ export type post = {
     caption: string;
     likes: number;
     likedBy: string[];
+    likedByUsernames: string[];
     postedBy: string;
     uploader: user;
     postedByUsername: string;

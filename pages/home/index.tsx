@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, createContext, useContext, Children, PropsWithChildren } from "react";
+import React, { useEffect, useRef, useState, PropsWithChildren } from "react";
 import Cookies from "js-cookie";
 import axios from "axios";
 import Link from "next/link";
@@ -9,7 +9,6 @@ import { ChatIcon as ChatIconSolid, HeartIcon as HeartIconSolid, HomeIcon as Hom
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import Spinner from "../../components/Spinner";
-import Error from "../../components/Error";
 import { GlobalContextProvider, useGlobalContext, useGlobalUpdateContext } from "../../components/GlobalContext2";
 import { useRouter } from "next/router";
 import { server } from "..";
@@ -20,6 +19,8 @@ import { connect } from "../../utils/db";
 import User from "../../utils/User";
 import { user } from "../../utils/type";
 import Post from "../../utils/Post";
+import Search from "../../components/Search"
+import { type } from "os";
 // import Profile from "./[profile]"
 type set<T> = React.Dispatch<React.SetStateAction<T>>
 // const server = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api";
@@ -28,6 +29,7 @@ type post = {
     caption: string;
     likes: number;
     likedBy: string[];
+    likedByUsernames: string[];
     postedBy: string;
     postedByUsername: string;
     postedOn: number;
@@ -153,201 +155,107 @@ function Home(props: AppPropsType) {
         return <>Loading</>
     }
 }
-
+type ShowLikedByType = {
+    state: boolean;
+    postId: string;
+}
 function Feed() {
     const globalContext = useGlobalContext();
     const posts = globalContext.feedResults;
+    const [showLikedBy, setShowLikedBy] = useState({ state: false, postId: "" });
     return <div className="h-full w-full overflow-y-scroll overflow-x-hidden">
+        {/* {showLikedBy && <ModalWithBackdrop>
+            <div>
 
+            </div>
+            </ModalWithBackdrop>} */}
         {
             posts.map((post) => {
-                return <FeedPost key={uuid()} post={post}></FeedPost>
+                return <FeedPost key={uuid()} {...{ setShowLikedBy, post }}></FeedPost>
             })
         }
     </div>
 }
 
-function FeedPost(props: { post: post }) {
+function FeedPost(props: { post: post, setShowLikedBy: set<ShowLikedByType> }) {
+    const [isLiked, setIsLiked] = useState(false);
     useEffect(() => {
         const postPictures = document.getElementsByClassName("postPicture");
         for (let i = 0; i < postPictures.length; i++) {
-            const postPicture = postPictures[i];
             //@ts-ignore
             postPictures[i].style.height = window.getComputedStyle(postPictures[0]).width;
         }
     })
     const { post } = props;
-    return <div className="grid grid-rows-[1fr_auto_1fr] items-center h-fit w-full my-2 gap-2 ">
-        <ProfilePictureAndUsername {...{ profilePictureUrl: post.profilePictureUrl, username: post.postedByUsername }}></ProfilePictureAndUsername>
-        <div className="postPicture w-full">
-            <img src={post.imageUrl}></img>
-        </div>
-        <div className="h-full w-full grid grid-rows-2">
-            <div className="h-full w-full grid grid-cols-[1fr_9fr] items-center">
-                <HeartIcon></HeartIcon>
-                <div className="underline hover:cursor-pointer ml-2">
-                    Liked By
+    const [showLikedBy, setShowLikedBy] = useState(false);
+    const handleLike = (postId: string) => {
+        setIsLiked(!isLiked);
+        axios.post(`${server}/like`, { postId }).then((res) => {
+            if (res.data.status == "ok") {
+                if (res.data.message.liked == true) {
+                    setIsLiked(true);
+                } else {
+                    setIsLiked(false);
+                }
+            } else {
+                setIsLiked(!isLiked);
+            }
+        })
+    }
+    return <>
+        {
+            showLikedBy &&
+            <ModalWithBackdrop>
+                <div>nothing</div>
+                {
+                    post.likedByUsernames.map(username => {
+                        return <ProfilePictureAndUsername key={uuid()} {...{ username }}></ProfilePictureAndUsername>
+                    })
+                }
+            </ModalWithBackdrop>
+        }
+        <div className="grid grid-rows-[1fr_auto_1fr] items-center h-fit w-full my-2 gap-2 ">
+            <ProfilePictureAndUsername {...{ profilePictureUrl: post.profilePictureUrl, username: post.postedByUsername }}></ProfilePictureAndUsername>
+            <div className="postPicture w-full">
+                <img src={post.imageUrl}></img>
+            </div>
+            <div className="h-full w-full grid grid-rows-2">
+                <div className="h-full w-full grid grid-cols-[1fr_9fr] items-center">
+                    <div className="h-full w-full hover:cursor-pointer" onClick={() => {
+                        setIsLiked(!isLiked);
+                        handleLike(post._id);
+                    }}>
+                        {!isLiked && <HeartIcon></HeartIcon>}
+                        {isLiked && <HeartIconSolid className="text-red-600"></HeartIconSolid>}
+                    </div>
+                    <div className="underline hover:cursor-pointer ml-2" onClick={() => { setShowLikedBy(true) }}>
+                        Liked By
+                    </div>
+                </div>
+                <div className="pl-2">
+                    {post.caption}
                 </div>
             </div>
-            <div className="pl-2">
-                {post.caption}
-            </div>
         </div>
-    </div>
+    </>
 }
-function ProfilePictureAndUsername(props: { profilePictureUrl: string, username: string }) {
+
+
+function ProfilePictureAndUsername(props: { username: string }) {
     const router = useRouter();
-    const { profilePictureUrl, username } = props;
+    const { username } = props;
     const clickHandler = () => {
         router.push(`?username=${username}#profile`, `?username=${username}#profile`, { scroll: true })
     }
     return <div onClick={() => { clickHandler() }} className="h-full w-full grid grid-cols-[1fr_9fr] items-center hover:cursor-pointer">
         <div className="w-full">
-            <img src={profilePictureUrl} className="rounded-full border-2 border-black"></img>
+            <img src={`${server}/getProfilePic?username=${username}`} className="rounded-full border-2 border-black"></img>
         </div>
         <div onClick={() => { clickHandler() }} className="h-full w-full ml-2 grid items-center hover:cursor-pointer">
             {username}
         </div>
     </div>
 }
-type SearchPropType = {
-    setVisitingProfile: set<string>
-}
-
-function Search(props: SearchPropType) {
-    const { setVisitingProfile } = props;
-    const globalState = useGlobalContext();
-    const updateGlobalState = useGlobalUpdateContext()
-    const { username } = globalState;
-    const searchRef = useRef<HTMLInputElement>(null);
-    const [isSearching, setIsSearching] = useState(false);
-    const [searchComplete, setSearchComplete] = useState(false);
-    const [forRerender, setForReRender] = useState(false);
-    const [error, setError] = useState("");
-    const router = useRouter();
-    const initiateSearch = (e: React.FormEvent) => {
-        e.preventDefault()
-        setIsSearching(true);
-        setError("");
-        const searchTerm = searchRef?.current?.value;
-        if (searchTerm && searchTerm != "") {
-            axios.get(`${server}/search`, { params: { searchTerm, hash: Cookies.get("hash") } }).then(res => {
-                if (res.data.status === "ok") {
-                    updateGlobalState({ ...globalState, searchResults: res.data.results });
-                    setSearchComplete(true);
-                    setIsSearching(false)
-                } else {
-                    setError(res.data.message.error)
-                }
-            })
-        }
-    }
-    type searchBarProps = {
-        initiateSearch: (e: React.FormEvent) => void;
-    }
-    const Searchbar = React.forwardRef<HTMLInputElement, searchBarProps>(
-        (props, ref) => {
-            const { initiateSearch } = props;
-            return <form onSubmit={(e) => {
-                initiateSearch(e)
-            }}>
-                <div className="h-full w-full grid grid-cols-[10fr_90fr_10fr] gap-2 px-2 items-center">
-                    <ArrowLeftIcon className="hover:cursor-pointer" onClick={() => {
-                        router.back()
-                    }}></ArrowLeftIcon>
-                    <Input onChange={() => { }} ref={ref} placeholder="Search" autoFocus={true} className="h-4/6"></Input>
-                    <button><SearchIcon></SearchIcon></button>
-                </div>
-            </form>
-
-        }
-    );
-    Searchbar.displayName = "SearchBar"
-    type SearchResultsProps = {
-        isSearching: boolean;
-        searchComplete: boolean;
-        setVisitingProfile: set<string>
-    }
-    function SearchResults(props: SearchResultsProps) {
-        const globalState = useGlobalContext();
-        const { isSearching, searchComplete, setVisitingProfile } = props;
-        const { username } = globalState;
-        const [searchResults, setSearchResults] = useState(globalState.searchResults);
-
-        const router = useRouter();
-
-        //loading
-        if (isSearching) {
-            return <div className="h-full w-full flex items-center justify-center">
-                <Spinner></Spinner>
-            </div>
-        }
-        //if query not return anything
-        if (searchResults[0] == undefined) {
-            return <div className="h-full w-full flex items-center justify-center">
-                <div>No user found</div>
-            </div>
-        }
-        //if search results in default state
-        if (searchResults[0].username == "") {
-            return <div className="h-full w-full"></div>
-        }
-        return (<div className="h-full flex flex-col my-5 mx-5">
-            {
-                searchResults.map(result => {
-                    if (result.username !== username) {
-                        return <div onClick={() => {
-                            setVisitingProfile(result.username);
-                            router.push(`?username=${result.username}#profile`);
-                        }} key={uuid()}>
-                            <div className="flex flex-row items-center justify-between my-3 border border-black rounded-sm py-2 px-3 hover:cursor-pointer">
-                                <div className="flex flex-row items-center justify-between">
-                                    <img alt="Profile Picture" src={`${server}/getProfilePic?username=${result.username}`} height="50" width="50" className="rounded-full border border-black "></img>
-                                    <div className="text-center mx-5">{result.username}</div>
-                                </div>
-                                <Button key={uuid()} bonClick={(e) => {
-                                    e.stopPropagation();
-                                    if (!result.isFollowing) {
-                                        //try extracting logic to fucntion
-                                        axios.post(`${server}/follow`, { hash: Cookies.get("hash"), toFollow: result.username }).then(res => {
-                                            console.log("follow res = ", res);
-                                            if (res.data.status === "ok") {
-                                                const tempResults: (typeof searchResults) = Object.assign([], searchResults);
-                                                tempResults[searchResults.indexOf(result)].isFollowing = true;
-                                                setSearchResults(tempResults);
-                                                setForReRender(!forRerender);
-                                            }
-                                        })
-                                    } else {
-                                        axios.post(`${server}/unfollow`, { hash: Cookies.get("hash"), toUnFollow: result.username }).then(res => {
-                                            if (res.data.status === "ok") {
-                                                const tempResults: (typeof searchResults) = Object.assign([], searchResults);
-                                                tempResults[searchResults.indexOf(result)].isFollowing = false;
-                                                setSearchResults(tempResults);
-                                                setForReRender(!forRerender);
-                                            }
-                                        })
-                                    }
-                                }} text={`${result.isFollowing ? "Following" : "Follow"}`} className={`${result.isFollowing ? "bg-slate-500" : "bg-blue-400"}`}></Button>
-                            </div>
-                        </div>
-                    }
-                })
-            }
-        </div>
-        )
-    }
-    return <>
-        <Searchbar ref={searchRef} {...{ initiateSearch }} ></Searchbar>
-        {error !== "" &&
-            <div className="h-full w-full flex justify-center items-center">
-                <Error message={error} className="px-3 py-2"></Error>
-            </div>
-        }
-        {error == "" && <SearchResults {...{ isSearching, searchComplete, setVisitingProfile }}></SearchResults>}
-    </>
-}
-
 //to load profile route to /home?username=username#profile
 function Profile() {
     const globalState = useGlobalContext();
@@ -597,7 +505,7 @@ function CreatePost() {
     return (
         <>
             {uploading &&
-                <div className="absolute h-screen w-screen left-0 z-10  0 flex justify-center items-center backdrop-blur-sm">
+                <ModalWithBackdrop>
                     <div className="h-32 w-32 bg-gray-400  rounded-md border-2 border-black flex flex-col justify-center items-center">
                         {!uploadComplete && <Spinner></Spinner>}
                         {uploadComplete && <>
@@ -612,7 +520,7 @@ function CreatePost() {
                             error && <div className="text-red-500 text-center">{error}</div>
                         }
                     </div>
-                </div>
+                </ModalWithBackdrop>
             }
             <div className=" justify-center">
                 <canvas id="canvas" className="hidden"></canvas>
@@ -634,6 +542,12 @@ function CreatePost() {
     )
 }
 
+function ModalWithBackdrop(props: PropsWithChildren) {
+    return (
+        <div className="absolute h-screen w-screen left-0 top-0 z-90  0 flex justify-center items-center backdrop-blur-sm">
+            {props.children}
+        </div>)
+}
 
 function Topbar() {
     return <div className="w-full h-full overflow-hidden  content-center flex items-center px-3">
@@ -716,45 +630,37 @@ function getLastHash(url: string) {
     return undefined;
 }
 
-//hcf function
-function hcf(a: number, b: number): number {
-    if (b === 0) {
-        return a;
-    }
-    return hcf(b, a % b);
-}
 
-
-export async function getServerSideProps(context: { req: NextApiRequest }) {
-    const hash = context.req.cookies.hash!;
-    let flatPost: post[] = [];
-    const connection = await connect();
-    if (hash) {
-        const reqUser = await User.findOne({ hash: hash }, "followingUsers") as user;
-        if (reqUser) {
-            const following = reqUser.followingUsers;
-            if (following.length > 0) {
-                const postByFollowing = await User.find({ _id: { $in: following } }, "username posts") as user[];
-                for (let i = 0; i < postByFollowing.length; i++) {
-                    let posts = await Post.aggregate([{ $match: { _id: { $in: postByFollowing[i].posts } } }]).limit(10).sort({ postedOn: -1 });
-                    posts = posts.map(post => {
-                        post.postedByUsername = postByFollowing[0].username;
-                        return post;
-                    })
-                    flatPost.push(...posts);
-                }
-                return {
-                    props: { posts: JSON.stringify(flatPost) }
-                }
-            } else {
-                return {
-                    props: { posts: "[]" }
-                }
-            }
-        } else {
-            return {
-                props: { posts: "[]" }
-            }
-        }
-    }
-}
+// export async function getServerSideProps(context: { req: NextApiRequest }) {
+//     const hash = context.req.cookies.hash!;
+//     let flatPost: post[] = [];
+//     const connection = await connect();
+//     if (hash) {
+//         const reqUser = await User.findOne({ hash: hash }, "followingUsers") as user;
+//         if (reqUser) {
+//             const following = reqUser.followingUsers;
+//             if (following.length > 0) {
+//                 const postByFollowing = await User.find({ _id: { $in: following } }, "username posts") as user[];
+//                 for (let i = 0; i < postByFollowing.length; i++) {
+//                     let posts = await Post.aggregate([{ $match: { _id: { $in: postByFollowing[i].posts } } }]).limit(10).sort({ postedOn: -1 });
+//                     posts = posts.map(post => {
+//                         post.postedByUsername = postByFollowing[0].username;
+//                         return post;
+//                     })
+//                     flatPost.push(...posts);
+//                 }
+//                 return {
+//                     props: { posts: JSON.stringify(flatPost) }
+//                 }
+//             } else {
+//                 return {
+//                     props: { posts: "[]" }
+//                 }
+//             }
+//         } else {
+//             return {
+//                 props: { posts: "[]" }
+//             }
+//         }
+//     }
+// }

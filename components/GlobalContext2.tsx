@@ -4,7 +4,7 @@ const init = {
     username: "",
     ppBlobUrl: "",
     searchResults: [{ username: "", isFollowing: false }],
-    feedResults: [{ postedBy: "", postedByUsername: "", profilePictureUrl: "", likedBy: [""], _id: "", caption: "", imageUrl: "", likes: 0, postedOn: 0 }],
+    feedResults: [{ postedBy: "", postedByUsername: "", profilePictureUrl: "", likedBy: [""], likedByUsernames: [""], _id: "", caption: "", imageUrl: "", likes: 0, postedOn: 0 }],
 }
 
 const GlobalContext = React.createContext(init);
