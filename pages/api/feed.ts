@@ -14,25 +14,35 @@ export default async function getPosts(req: NextApiRequest, res: NextApiResponse
         if (reqUser) {
             const following = reqUser.followingUsers;
             if (following.length > 0) {
-                let posts: post[] = await Post.aggregate([{
-                    $lookup: {
-                        from: "users",
-                        localField: "likedBy",
-                        foreignField: "_id",
-                        let: { ids: "$likedBy" },
-                        pipeline: [
-                            {
-                                $match: {
-                                    $expr: {
-                                        $in: ["$_id", "$$ids"]
+                let posts: post[] = await Post.aggregate([
+                    {
+                        $redact: {
+                            $cond: {
+                                if: { $in: ["$postedBy", following] },
+                                then: "$$DESCEND",
+                                else: "$$PRUNE"
+                            }
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "likedBy",
+                            foreignField: "_id",
+                            let: { ids: "$likedBy" },
+                            pipeline: [
+                                {
+                                    $match: {
+                                        $expr: {
+                                            $in: ["$_id", "$$ids"]
+                                        }
                                     }
-                                }
-                            },
-                            { $project: { username: 1, _id: 0 } },
-                        ],
-                        as: "likedByUsernames"
-                    }
-                },
+                                },
+                                { $project: { username: 1, _id: 0 } },
+                            ],
+                            as: "likedByUsernames"
+                        }
+                    },
                     {
                         $lookup: {
                             from: "users",
@@ -51,7 +61,7 @@ export default async function getPosts(req: NextApiRequest, res: NextApiResponse
                             ],
                             as: "postedByUsername"
                         }
-                }
+                    }
                 ]).sort({ postedOn: -1 }).limit(10);
                 res.status(200).json({ status: "ok", posts: posts });
             } else {

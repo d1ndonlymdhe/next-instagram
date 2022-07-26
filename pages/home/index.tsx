@@ -40,6 +40,8 @@ type AppPropsType = { posts: string };
 
 export default function App(props: AppPropsType) {
     const { posts } = props;
+    //@ts-ignore
+    console.log(JSON.parse(props.posts))
     return <GlobalContextProvider>
         <Home posts={props.posts} />
     </GlobalContextProvider>
@@ -646,27 +648,18 @@ export async function getServerSideProps(context: { req: NextApiRequest }) {
     const connection = await connect();
     if (hash) {
         const reqUser = await User.findOne({ hash: hash }, "followingUsers") as user;
-
         if (reqUser) {
             const following = reqUser.followingUsers;
             if (following.length > 0) {
-                let posts: post[] = await Post.aggregate([{
-                    $lookup: {
-                        from: "users",
-                        localField: "followingUsers",
-                        foreignField: "_id",
-                        let: { followingUsers: "$followingUsers", selfId: "$_id" },
-                        pipeline: [
-                            {
-                                $match: {
-                                    $expr: {
-                                        $in: ["$_id", "$$followingUsers"]
-                                    }
-                                }
+                let posts: post[] = await Post.aggregate([
+                    {
+                        $redact: {
+                            $cond: {
+                                if: { $in: ["$postedBy", following] },
+                                then: "$$DESCEND",
+                                else: "$$PRUNE"
                             }
-                        ],
-                        as: "followingusers"
-                    },
+                        }
                 },
                 {
                     $lookup: {
@@ -705,9 +698,8 @@ export async function getServerSideProps(context: { req: NextApiRequest }) {
                         ],
                         as: "postedByUsername"
                     }
-                }
+                    },
                 ]).sort({ postedOn: -1 }).limit(10);
-                console.log(posts)
                 return {
                     props: { posts: JSON.stringify(posts) }
                 }
