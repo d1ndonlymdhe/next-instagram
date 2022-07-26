@@ -41,7 +41,6 @@ type AppPropsType = { posts: string };
 export default function App(props: AppPropsType) {
     const { posts } = props;
     //@ts-ignore
-    console.log(JSON.parse(props.posts))
     return <GlobalContextProvider>
         <Home posts={props.posts} />
     </GlobalContextProvider>
@@ -82,13 +81,10 @@ function Home(props: AppPropsType) {
                         const img = await imgRes.blob();
                         newState.ppBlobUrl = URL.createObjectURL(img);
                     }
-                    // console.log(JSON.parse(posts));
                     if (posts) {
                         newState.feedResults = JSON.parse(posts);
                     } else {
-                        console.log("no posts")
                         const res = await axios.get(`${server}/feed`, { params: { hash } })
-                        console.log(res.data)
                         if (res.data.status !== "error") {
                             newState.feedResults = res.data.posts;
                         } else {
@@ -164,20 +160,15 @@ function Feed() {
     const posts = globalContext.feedResults;
     const [showLikedBy, setShowLikedBy] = useState({ state: false, postId: "" });
     return <div className="h-full w-full overflow-y-scroll overflow-x-hidden">
-        {/* {showLikedBy && <ModalWithBackdrop>
-            <div>
-
-            </div>
-            </ModalWithBackdrop>} */}
         {
             posts.map((post) => {
-                return <FeedPost key={uuid()} {...{ setShowLikedBy, post }}></FeedPost>
+                return <FeedPost key={uuid()} {...{ post }}></FeedPost>
             })
         }
     </div>
 }
 
-function FeedPost(props: { post: clientPost, setShowLikedBy: set<ShowLikedByType> }) {
+function FeedPost(props: { post: clientPost }) {
     useEffect(() => {
         const postPictures = document.getElementsByClassName("postPicture");
         for (let i = 0; i < postPictures.length; i++) {
@@ -223,7 +214,7 @@ function FeedPost(props: { post: clientPost, setShowLikedBy: set<ShowLikedByType
         <div className="grid grid-rows-[1fr_auto_1fr] items-center h-fit w-full my-2 gap-2 ">
             <ProfilePictureAndUsername {...{ username: post.postedByUsername[0].username }}></ProfilePictureAndUsername>
             <div className="postPicture w-full mb-2">
-                <img src={post.imageUrl}></img>
+                <img src={`${server}/getPostPic?postId=${post._id}&uploaderId=${post.postedBy}`}></img>
             </div>
             <div className="h-full w-full grid grid-rows-2">
                 <div className="h-full w-full grid grid-cols-[1fr_9fr] items-center">
@@ -262,25 +253,41 @@ function ProfilePictureAndUsername(props: { username: string }) {
         </div>
     </div>
 }
+
 //to load profile route to /home?username=username#profile
 function Profile() {
     const globalState = useGlobalContext();
     const selfUsername = globalState.username;
     const router = useRouter();
     const { ppBlobUrl } = globalState;
-    let [followersCount, setFollowersCount] = useState(0);
-    let [followingCount, setFollowingCount] = useState(0);
+    const [followersCount, setFollowersCount] = useState(0);
+    const [followingCount, setFollowingCount] = useState(0);
+    const [userInfo, setUserInfo] = useState<Partial<user>>({
+        followersCount: 0,
+        followingCount: 0,
+        followerUsers: [{ username: "" }],
+        followingUsers: [{ username: "" }],
+        //@ts-ignore
+        posts: [{}]
+    })
+    const [loadingPosts, setLoadingPosts] = useState(true);
     const [isfollowing, setIsFollowing] = useState(false);
     const [username, setUsername] = useState((typeof router.query.username == "string") ? router.query.username : "");
     const [ppUrl, setPpUrl] = useState("")
     const [bio, setBio] = useState("");
     useEffect(() => {
-        console.log(router.query.username);
-        axios.get(`${server}/userinfo`, { params: { username } }).then(res => {
-            if (res.data.status === "ok") {
-                setFollowersCount(res.data.message.followersCount);
-                setFollowingCount(res.data.message.followingCount);
-                setBio(res.data.message.bio);
+        axios.get(`${server}/userinfo`, { params: { username } }).then(async userInfo => {
+            if (userInfo.data.status === "ok") {
+                setFollowersCount(userInfo.data.message.followersCount);
+                setFollowingCount(userInfo.data.message.followingCount);
+                axios.get(`${server}/getPostsFromUser`, { params: { username } }).then(res => {
+                    if (res.data.status == "ok") {
+                        const { followersCount, followingCount, followerUsers, followingUsers } = userInfo.data.message
+                        const posts = res.data.posts
+                        setUserInfo({ followersCount, followingCount, followerUsers, followingUsers, posts })
+                        setLoadingPosts(false);
+                    }
+                })
                 if (username !== selfUsername) {
                     setPpUrl(`${server}/getProfilePic?username=${username}`)
                 } else {
@@ -291,7 +298,6 @@ function Profile() {
         if (username !== selfUsername) {
             axios.get(`${server}/search`, { params: { searchTerm: username, hash: Cookies.get("hash"), limit: 1 } }).then(res => {
                 if (res.data.status === "ok") {
-                    console.log(res.data.results);
                     if (res.data.results[0].isFollowing == true) {
                         setIsFollowing(true);
                     }
@@ -322,7 +328,7 @@ function Profile() {
                     Following
                 </span>
                 <span className="text-center">
-                    {followingCount}
+                    {userInfo.followingCount}
                 </span>
             </div>
             <div className="grid grid-rows-2 justify-center items-center">
@@ -330,11 +336,28 @@ function Profile() {
                     Followers
                 </span>
                 <span className="text-center">
-                    {followersCount}
+                    {userInfo.followersCount}
                 </span>
             </div>
         </>
     }
+    const userInfoUI = <div className="grid grid-cols-[100px_auto]">
+        <ProfilePicture src={ppUrl}></ProfilePicture>
+        <div className="flex flex-wrap justify-around ml-5">
+            <FollowingAndFollowerCount></FollowingAndFollowerCount>
+            <div className="flex justify-center items-center w-[200%] my-4 overflow-x-auto">{bio}</div>
+            {(username !== selfUsername) &&
+                <Button bonClick={(e) => {
+                    if (!isfollowing) {
+                        follow(username);
+                        setFollowersCount(followersCount + 1);
+                    } else {
+                        unFollow(username);
+                        setFollowersCount(followersCount - 1);
+                    }
+                }} text={isfollowing ? "following" : "follow"} className={`w-full ${!isfollowing && "hover:bg-blue-500"} ${isfollowing && "hover:bg-gray-400"}`}></Button>}
+        </div >
+    </div>
 
     return <>
         {/*Topbar without logout button*/}
@@ -360,24 +383,20 @@ function Profile() {
                 }}></LogoutIcon>
             </div>
         }
-        <div className="h-full w-full mt-5 gap-5">
-            <div className="grid grid-cols-[100px_auto]">
-                <ProfilePicture src={ppUrl}></ProfilePicture>
-                <div className="flex flex-wrap justify-around ml-5">
-                    <FollowingAndFollowerCount></FollowingAndFollowerCount>
-                    <div className="flex justify-center items-center w-[200%] my-4 overflow-x-auto">{bio}</div>
-                    {(username !== selfUsername) &&
-                        <Button bonClick={(e) => {
-                            if (!isfollowing) {
-                                follow(username);
-                                setFollowersCount(followersCount + 1);
-                            } else {
-                                unFollow(username);
-                                setFollowersCount(followersCount - 1);
-                            }
-                        }} text={isfollowing ? "following" : "follow"} className={`w-full ${!isfollowing && "hover:bg-blue-500"} ${isfollowing && "hover:bg-gray-400"}`}></Button>}
-                </div >
-            </div >
+        <div className="h-full w-full mt-5 grid grid-rows-[2fr_8fr]">
+            {userInfoUI}
+            <div className="h-full w-full overflow-scroll">
+                {loadingPosts && "loading"}
+                {!loadingPosts && (
+                    userInfo.posts && (
+                        userInfo.posts.map(post => {
+                            //@ts-ignore
+                            return <FeedPost key={uuid()} post={post}></FeedPost>
+                        })
+                    )
+                )}
+            </div>
+
         </div >
     </>
 }
@@ -395,17 +414,12 @@ function CreatePost() {
     useEffect(() => {
         window.onresize = (e) => {
             const placeHolder = document.getElementById("imagePlaceholder")!;
-            console.log("placeholder = ", placeHolder)
-            console.log(window.getComputedStyle(placeHolder).width);
             placeHolder.style.height = window.getComputedStyle(placeHolder).width;
-            console.log(placeHolder.style.height)
         }
     })
     useEffect(() => {
         const placeHolder = document.getElementById("imagePlaceholder")!;
-        console.log(window.getComputedStyle(placeHolder).width);
         placeHolder.style.height = window.getComputedStyle(placeHolder).width;
-        console.log(placeHolder.style.height)
     }, [])
     const FileInput = () => {
         return <div id="imagePlaceholder" className="w-full flex justify-center items-center">
@@ -432,7 +446,6 @@ function CreatePost() {
                                     const img = document.createElement("img");
                                     img.onload = (e) => {
                                         const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-                                        console.log(img.width, img.height);
                                         const ratio = img.width / img.height
                                         let width = 1000;
                                         let height = 1000 / ratio;
@@ -450,10 +463,7 @@ function CreatePost() {
                                             //@ts-ignore
                                             ctx.filter = "none";
                                             ctx.drawImage(img, (1000 - width) / 2, (1000 - height) / 2, width, height);
-                                            // ctx?.drawImage(img, 0, 250, 1000, 1000);
-                                            const dataurl = canvas.toDataURL(file.type);
-                                            console.log(dataurl);
-
+                                            const dataurl = canvas.toDataURL(file.type, 0.6);
                                             setImageUploaded(true);
                                             setImageUrl(dataurl);
                                             fetch(dataurl).then(res => {
@@ -461,13 +471,11 @@ function CreatePost() {
                                             }).then(blob => {
                                                 //@ts-ignore
                                                 picRef.current = blob;
-                                                console.log(picRef);
                                             })
                                         }
                                     }
                                     //@ts-ignore
                                     img.src = e.target.result as string;
-                                    console.log(img.src);
                                 }
                                 reader.readAsDataURL(file);
                             } else {
@@ -520,7 +528,8 @@ function CreatePost() {
                         {!uploadComplete && <Spinner></Spinner>}
                         {uploadComplete && <>
                             <div>Complete</div>
-                            <Button bonClick={() => {
+                            <Button bonClick={(e) => {
+                                e.stopPropagation()
                                 setUploading(false);
                                 setUploadComplete(false);
                                 router.back()
@@ -590,7 +599,7 @@ type footerProps = {
 
 function Footer(props: footerProps) {
     const { activeTab, setActiveTab } = props;
-    return <div className="grid grid-cols-5 gap-16  w-full h-full items-center justify-center align-baseline sticky">
+    return <div className="grid grid-cols-5 gap-16  w-full h-full items-center justify-center align-baseline sticky bg-white">
         {ReturnIconForFooter(activeTab, "home", HomeIcon, HomeIconSolid)}
         {ReturnIconForFooter(activeTab, "search", SearchIcon, SearchIconSolid)}
         {ReturnIconForFooter(activeTab, "post", PlusIcon, PlusIconSolid)}
@@ -600,9 +609,7 @@ function Footer(props: footerProps) {
 }
 
 export function Wrapper(props: PropsWithChildren) {
-
     return <div className="grid grid-rows-[6%_88%_6%] h-full w-full max-w-[500px] overflow-hidden bg-white box-border rounded-lg px-2 pt-2 font-Roboto">{props.children}</div>
-
 }
 
 

@@ -2,14 +2,14 @@ export type user = {
     username: string;
     password?: string;
     followingCount: number;
-    followingUsers: string[];
+    followingUsers: { username: string }[];
     followersCount: number;
-    followerUsers: string[];
+    followerUsers: { username: string }[];
     firstLogin: boolean;
     hash: string;
     bio?: string;
     _id: string;
-    posts: string[];
+    posts: { posts: posts }[];
     save: () => void
 }
 
