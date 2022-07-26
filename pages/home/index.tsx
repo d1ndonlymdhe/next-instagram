@@ -6,9 +6,7 @@ import Link from "next/link";
 import uuid from "react-uuid"
 import { ArrowLeftIcon, ChatIcon, HeartIcon, HomeIcon, LogoutIcon, PlusIcon, SearchIcon, ShoppingBagIcon, UserIcon } from "@heroicons/react/outline";
 import { ChatIcon as ChatIconSolid, HeartIcon as HeartIconSolid, HomeIcon as HomeIconSolid, PlusIcon as PlusIconSolid, SearchIcon as SearchIconSolid, ShoppingBagIcon as ShoppingBagIconSolid, UserIcon as UserIconSolid } from "@heroicons/react/solid";
-import Input from "../../components/Input";
 import Button from "../../components/Button";
-import Spinner from "../../components/Spinner";
 import { GlobalContextProvider, useGlobalContext, useGlobalUpdateContext } from "../../components/GlobalContext2";
 import { useRouter } from "next/router";
 import { server } from "..";
@@ -20,6 +18,8 @@ import User from "../../utils/User";
 import { post, user } from "../../utils/type";
 import Post from "../../utils/Post";
 import Search from "../../components/Search"
+import CreatePost from "../../components/CreatePost";
+import ModalWithBackdrop from "../../components/ModalWithBackDrop";
 // import Profile from "./[profile]"
 type set<T> = React.Dispatch<React.SetStateAction<T>>
 // const server = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api";
@@ -151,10 +151,6 @@ function Home(props: AppPropsType) {
         return <>Loading</>
     }
 }
-type ShowLikedByType = {
-    state: boolean;
-    postId: string;
-}
 function Feed() {
     const globalContext = useGlobalContext();
     const posts = globalContext.feedResults;
@@ -197,18 +193,12 @@ function FeedPost(props: { post: clientPost }) {
     return <>
         {
             showLikedBy &&
-            <ModalWithBackdrop onclick={() => { setShowLikedBy(false) }}>
-                <div className="bg-gray-400 max-w-[300px]  flex flex-col justify-center items-center px-2 pb-2 rounded-md border-2 border-black">
-                    <div className="flex flex-col my-2">
-                        <div className="text-center text-xl border-b-2 border-black mb-2">Liked By</div>
-                        {
-                                post.likedByUsernames.map(user => {
-                                    return <ProfilePictureAndUsername key={uuid()} {...{ username: user.username }}></ProfilePictureAndUsername>
-                                })
-                            }
-                        </div>
-                        <Button bonClick={(e) => { setShowLikedBy(false) }} text="exit"></Button>
-                    </div>
+            <ModalWithBackdrop onclick={() => { setShowLikedBy(false) }} title="Liked By">
+                {
+                        post.likedByUsernames.map(likedBy => {
+                            return <ProfilePictureAndUsername username={likedBy.username} key={uuid()}></ProfilePictureAndUsername>
+                        })
+                    }
             </ModalWithBackdrop>
         }
         <div className="grid grid-rows-[1fr_auto_1fr] items-center h-fit w-full my-2 gap-2 ">
@@ -237,7 +227,6 @@ function FeedPost(props: { post: clientPost }) {
     </>
 }
 
-
 function ProfilePictureAndUsername(props: { username: string }) {
     const router = useRouter();
     const { username } = props;
@@ -260,31 +249,29 @@ function Profile() {
     const selfUsername = globalState.username;
     const router = useRouter();
     const { ppBlobUrl } = globalState;
-    const [followersCount, setFollowersCount] = useState(0);
-    const [followingCount, setFollowingCount] = useState(0);
-    const [userInfo, setUserInfo] = useState<Partial<user>>({
+    const [userInfo, setUserInfo] = useState<Pick<user, "followingCount" | "followerUsers" | "followersCount" | "bio" | "posts" | "followingUsers">>({
         followersCount: 0,
         followingCount: 0,
         followerUsers: [{ username: "" }],
         followingUsers: [{ username: "" }],
+        bio: "",
         //@ts-ignore
         posts: [{}]
     })
     const [loadingPosts, setLoadingPosts] = useState(true);
     const [isfollowing, setIsFollowing] = useState(false);
-    const [username, setUsername] = useState((typeof router.query.username == "string") ? router.query.username : "");
+    const [showFollowerUsers, setShowFollowerUsers] = useState(false);
+    const [showFollowingUsers, setShowFollowingUsers] = useState(false);
+    const [username] = useState((typeof router.query.username == "string") ? router.query.username : "");
     const [ppUrl, setPpUrl] = useState("")
-    const [bio, setBio] = useState("");
     useEffect(() => {
         axios.get(`${server}/userinfo`, { params: { username } }).then(async userInfo => {
             if (userInfo.data.status === "ok") {
-                setFollowersCount(userInfo.data.message.followersCount);
-                setFollowingCount(userInfo.data.message.followingCount);
                 axios.get(`${server}/getPostsFromUser`, { params: { username } }).then(res => {
                     if (res.data.status == "ok") {
-                        const { followersCount, followingCount, followerUsers, followingUsers } = userInfo.data.message
+                        const { followersCount, followingCount, followerUsers, followingUsers, bio } = userInfo.data.message
                         const posts = res.data.posts
-                        setUserInfo({ followersCount, followingCount, followerUsers, followingUsers, posts })
+                        setUserInfo({ followersCount, followingCount, followerUsers, followingUsers, posts, bio })
                         setLoadingPosts(false);
                     }
                 })
@@ -323,7 +310,10 @@ function Profile() {
     }
     const FollowingAndFollowerCount = () => {
         return <>
-            <div className="grid grid-rows-2 justify-center items-center content-center">
+            <div onClick={(e) => {
+                e.stopPropagation();
+                setShowFollowingUsers(true);
+            }} className="grid grid-rows-2 justify-center items-center content-center hover:cursor-pointer">
                 <span className="text-center">
                     Following
                 </span>
@@ -331,7 +321,10 @@ function Profile() {
                     {userInfo.followingCount}
                 </span>
             </div>
-            <div className="grid grid-rows-2 justify-center items-center">
+            <div onClick={(e) => {
+                e.stopPropagation();
+                setShowFollowerUsers(true)
+            }} className="grid grid-rows-2 justify-center items-center hover:cursor-pointer">
                 <span className="text-center">
                     Followers
                 </span>
@@ -345,21 +338,41 @@ function Profile() {
         <ProfilePicture src={ppUrl}></ProfilePicture>
         <div className="flex flex-wrap justify-around ml-5">
             <FollowingAndFollowerCount></FollowingAndFollowerCount>
-            <div className="flex justify-center items-center w-[200%] my-4 overflow-x-auto">{bio}</div>
+            <div className="flex justify-center items-center w-[200%] my-4 overflow-x-auto">{userInfo.bio}</div>
             {(username !== selfUsername) &&
                 <Button bonClick={(e) => {
                     if (!isfollowing) {
                         follow(username);
-                        setFollowersCount(followersCount + 1);
+                        setUserInfo({ ...userInfo, followersCount: userInfo.followersCount + 1 });
                     } else {
                         unFollow(username);
-                        setFollowersCount(followersCount - 1);
+                        setUserInfo({ ...userInfo, followersCount: userInfo.followersCount - 1 });
+
                     }
                 }} text={isfollowing ? "following" : "follow"} className={`w-full ${!isfollowing && "hover:bg-blue-500"} ${isfollowing && "hover:bg-gray-400"}`}></Button>}
         </div >
     </div>
-
     return <>
+        {
+            showFollowerUsers &&
+            <ModalWithBackdrop onclick={() => { setShowFollowerUsers(false) }} title="Followers">
+                {
+                    userInfo.followerUsers.map(follower => {
+                        return <ProfilePictureAndUsername key={uuid()} username={follower.username}></ProfilePictureAndUsername>
+                    })
+                }
+            </ModalWithBackdrop>
+        }
+        {
+            showFollowingUsers &&
+            <ModalWithBackdrop onclick={() => { setShowFollowingUsers(false) }} title="Following">
+                {
+                    userInfo.followingUsers.map(following => {
+                        return <ProfilePictureAndUsername key={uuid()} username={following.username}></ProfilePictureAndUsername>
+                    })
+                }
+            </ModalWithBackdrop>
+        }
         {/*Topbar without logout button*/}
         {(username !== selfUsername) &&
             <div className="h-full w-full items-center grid grid-cols-[10fr_90fr] gap-5">
@@ -401,174 +414,6 @@ function Profile() {
     </>
 }
 
-function CreatePost() {
-    const [imageUploaded, setImageUploaded] = useState(false);
-    const [imageUrl, setImageUrl] = useState("");
-    const innerRef = useRef<HTMLInputElement>(null);
-    const captionRef = useRef<HTMLInputElement>(null);
-    const router = useRouter();
-    const [error, setError] = useState("");
-    const [uploading, setUploading] = useState(false);
-    const [uploadComplete, setUploadComplete] = useState(false);
-    // let heightOfPlaceHolderChanged = false;
-    useEffect(() => {
-        window.onresize = (e) => {
-            const placeHolder = document.getElementById("imagePlaceholder")!;
-            placeHolder.style.height = window.getComputedStyle(placeHolder).width;
-        }
-    })
-    useEffect(() => {
-        const placeHolder = document.getElementById("imagePlaceholder")!;
-        placeHolder.style.height = window.getComputedStyle(placeHolder).width;
-    }, [])
-    const FileInput = () => {
-        return <div id="imagePlaceholder" className="w-full flex justify-center items-center">
-            {imageUploaded && <img alt={"preview"} className="" src={imageUrl}></img>}
-            <input type="file" accept={"image/jpeg,image/png,image/jpg"} ref={innerRef} className={"hidden"} id="ppUpload"></input>
-            {!imageUploaded && <div className="w-1/5 h-1/5 border-gray-400 rounded-md border-4">
-                <PlusIcon className="text-gray-400"></PlusIcon>
-            </div>}
-        </div>
-    }
-    const addPostPicture = (<div className={"h-full w-full flex items-center justify-center"}>
-        <div id={"formElementsWrapper"} className={"flex flex-col h-full w-full items-center "}>
-            <div className={"w-full h-fit border-solid border-2 border-gray-400"}>
-                <label htmlFor={"ppUpload"} className={"hover:cursor-pointer w-full h-full"}
-                    onChange={(e) => {
-                        if (innerRef !== null) {
-                            //@ts-ignore
-                            const files = innerRef.current?.files
-                            //@ts-ignore
-                            if (files) {
-                                const file = files[0];
-                                const reader = new FileReader();
-                                reader.onload = (e) => {
-                                    const img = document.createElement("img");
-                                    img.onload = (e) => {
-                                        const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-                                        const ratio = img.width / img.height
-                                        let width = 1000;
-                                        let height = 1000 / ratio;
-                                        if (height > 1000) {
-                                            width = 1000 * ratio;
-                                            height = 1000;
-                                        }
-                                        canvas.width = 1000;
-                                        canvas.height = 1000
-                                        const ctx = canvas.getContext("2d");
-                                        if (ctx !== null) {
-                                            //@ts-ignore
-                                            ctx.filter = "blur(100px)"
-                                            ctx.drawImage(img, 0, 0, 1000, 1000)
-                                            //@ts-ignore
-                                            ctx.filter = "none";
-                                            ctx.drawImage(img, (1000 - width) / 2, (1000 - height) / 2, width, height);
-                                            const dataurl = canvas.toDataURL(file.type, 0.6);
-                                            setImageUploaded(true);
-                                            setImageUrl(dataurl);
-                                            fetch(dataurl).then(res => {
-                                                return res.blob();
-                                            }).then(blob => {
-                                                //@ts-ignore
-                                                picRef.current = blob;
-                                            })
-                                        }
-                                    }
-                                    //@ts-ignore
-                                    img.src = e.target.result as string;
-                                }
-                                reader.readAsDataURL(file);
-                            } else {
-                                //do something
-                            }
-                        }
-                    }}>
-                    <FileInput></FileInput>
-                </label>
-            </div>
-            <div className="mt-3 w-full grid">
-                <Input onChange={() => { }} type="text" ref={captionRef} placeholder="caption" className="text-center w-[80%] ml-[10%]"></Input>
-            </div>
-        </div>
-    </div>)
-    const handleSubmit = () => {
-        if (picRef.current) {
-            const formData = new FormData();
-            if (picRef.current) {
-                formData.set("file", picRef.current);
-                formData.set("hash", Cookies.get("hash")!);
-                formData.set("caption", captionRef.current?.value || "");
-                setUploading(true);
-                axios.post(`${server}/upload`, formData).then(res => {
-                    if (res.data.status === "ok") {
-                        // router.back()
-                        setUploadComplete(true);
-                        // setUploading(false)
-                    } else {
-                        // setUploading(false)
-                        setError(res.data.message.error);
-                    }
-                }).catch(err => {
-                    setError(err.message);
-                    setUploading(false);
-                })
-            }
-        }
-    }
-    const picRef = useRef<Blob>(null);
-    return (
-        <>
-            {uploading &&
-                <ModalWithBackdrop onclick={() => {
-                    setUploading(false);
-                    setUploadComplete(false);
-                    router.back()
-                }}>
-                    <div className="h-32 w-32 bg-gray-400  rounded-md border-2 border-black flex flex-col justify-center items-center">
-                        {!uploadComplete && <Spinner></Spinner>}
-                        {uploadComplete && <>
-                            <div>Complete</div>
-                            <Button bonClick={(e) => {
-                                e.stopPropagation()
-                                setUploading(false);
-                                setUploadComplete(false);
-                                router.back()
-                            }} text="Go Back"></Button>
-                        </>}
-                        {
-                            error && <div className="text-red-500 text-center">{error}</div>
-                        }
-                    </div>
-                </ModalWithBackdrop>
-            }
-            <div className=" justify-center">
-                <canvas id="canvas" className="hidden"></canvas>
-                <form className="w-full h-full" onSubmit={
-                    (e) => {
-                        e.preventDefault();
-                        handleSubmit();
-                    }
-                }>
-                    <div className="grid w-full h-full grid-rows-[95fr_5fr]">
-                        {addPostPicture}
-                        <div className="w-full grid justify-center">
-                            <Button bonClick={() => { }} type="submit" text="submit" className="w-full"></Button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </>
-    )
-}
-
-function ModalWithBackdrop(props: PropsWithChildren<{ onclick?: any }>) {
-    const { onclick } = props;
-    return (
-        <div className="absolute h-screen w-screen left-0 top-0 z-90  0 flex justify-center items-center backdrop-blur-sm" onClick={() => { onclick && onclick() }}>
-            {props.children}
-        </div>)
-}
-
 function Topbar() {
     return <div className="w-full h-full overflow-hidden  content-center flex items-center px-3">
         <div className="w-full grid grid-cols-[7fr_2fr] content-center">
@@ -589,9 +434,6 @@ function Topbar() {
     </div>
 }
 
-
-
-
 type footerProps = {
     activeTab: string;
     setActiveTab: set<string>;
@@ -611,7 +453,6 @@ function Footer(props: footerProps) {
 export function Wrapper(props: PropsWithChildren) {
     return <div className="grid grid-rows-[6%_88%_6%] h-full w-full max-w-[500px] overflow-hidden bg-white box-border rounded-lg px-2 pt-2 font-Roboto">{props.children}</div>
 }
-
 
 function ReturnIconForFooter(activeTab: string, tabName: string, outline: any, solid: any) {
     const { username } = useGlobalContext();
@@ -667,46 +508,46 @@ export async function getServerSideProps(context: { req: NextApiRequest }) {
                                 else: "$$PRUNE"
                             }
                         }
-                },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "likedBy",
-                        foreignField: "_id",
-                        let: { ids: "$likedBy" },
-                        pipeline: [
-                            {
-                                $match: {
-                                    $expr: {
-                                        $in: ["$_id", "$$ids"]
-                                    }
-                                }
-                            },
-                            { $project: { username: 1, _id: 0 } },
-                        ],
-                        as: "likedByUsernames"
-                    }
-                },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "postedBy",
-                        foreignField: "_id",
-                        let: { id: "$postedBy" },
-                        pipeline: [
-                            {
-                                $match: {
-                                    $expr: {
-                                        $eq: ["$_id", "$$id"]
-                                    }
-                                }
-                            },
-                            { $project: { username: 1, _id: 0 } }
-                        ],
-                        as: "postedByUsername"
-                    }
                     },
-                ]).sort({ postedOn: -1 }).limit(10);
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "likedBy",
+                            foreignField: "_id",
+                            let: { ids: "$likedBy" },
+                            pipeline: [
+                                {
+                                    $match: {
+                                        $expr: {
+                                            $in: ["$_id", "$$ids"]
+                                        }
+                                    }
+                                },
+                                { $project: { username: 1, _id: 0 } },
+                            ],
+                            as: "likedByUsernames"
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "postedBy",
+                            foreignField: "_id",
+                            let: { id: "$postedBy" },
+                            pipeline: [
+                                {
+                                    $match: {
+                                        $expr: {
+                                            $eq: ["$_id", "$$id"]
+                                        }
+                                    }
+                                },
+                                { $project: { username: 1, _id: 0 } }
+                            ],
+                            as: "postedByUsername"
+                        }
+                    },
+                ]).sort({ postedOn: -1 });
                 return {
                     props: { posts: JSON.stringify(posts) }
                 }
