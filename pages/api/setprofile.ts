@@ -16,14 +16,15 @@ export default async function setprofile(req: NextApiRequest, res: NextApiRespon
                     console.log(err);
                 } else {
                     if (file.originalFilename) {
-                        if (getExtension(file.originalFilename) !== "png") {
+                        console.log("writing file")
+                        if (getExtension(file.originalFilename) !== "jpg") {
                             Jimp.read(data, (err, image) => {
                                 if (!err) {
-                                    image.write(`./files/${user._id}/profilepicture.png`);
+                                    image.write(`./files/${user._id}/profilepicture.jpg`);
                                 }
                             })
                         } else {
-                            fs.writeFile(`./files/${user._id}/profilepicture.png`, data, (err) => {
+                            fs.writeFile(`./files/${user._id}/profilepicture.jpg`, data, (err) => {
                                 console.log("write err", err);
                             });
                         }

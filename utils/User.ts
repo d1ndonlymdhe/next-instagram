@@ -13,12 +13,18 @@ const userSchema = new Schema({
         type: Number,
         default: 0,
     },
-    followingUsers: [mongoose.SchemaTypes.ObjectId],
+    followingUsers: {
+        type: [mongoose.SchemaTypes.ObjectId],
+        ref: "User"
+    },
     followersCount: {
         type: Number,
         default: 0,
     },
-    followerUsers: [mongoose.SchemaTypes.ObjectId],
+    followerUsers: {
+        type: [mongoose.SchemaTypes.ObjectId],
+        ref: "User"
+    },
     firstLogin: {
         type: Boolean,
         default: true

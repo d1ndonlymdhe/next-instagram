@@ -6,7 +6,11 @@ const postSchema = new Schema({
         default: "",
     },
     postedBy: mongoose.SchemaTypes.ObjectId,
+    postedByUsername: [{ username: String }],
     likedBy: [mongoose.SchemaTypes.ObjectId],
+    likedByUsernames: {
+        type: { type: Schema.Types.ObjectId, ref: 'User' }
+    },
     likes: {
         type: Number,
         default: 0

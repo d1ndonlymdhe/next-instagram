@@ -1,6 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { findUser } from "../../utils/db";
+import User from "../../utils/User";
 export default async function userinfo(req: NextApiRequest, res: NextApiResponse) {
+    userinfo2(req, res);
     const { hash, username } = (req.method === "POST") ? req.body : req.query;
     const user = (username !== undefined) ? (await findUser(username)) : (await findUser(undefined, hash));
     if (user !== null && user !== undefined) {
@@ -18,4 +20,10 @@ export default async function userinfo(req: NextApiRequest, res: NextApiResponse
     } else {
         res.status(200).json({ status: "error", message: { text: "No such user" } });
     }
+}
+
+async function userinfo2(req: NextApiRequest, res: NextApiResponse) {
+    const { hash, username } = (req.method === "POST") ? req.body : req.query;
+    const user = await User.findOne({ username }).populate("followerUsers", "username").populate("followingUsers", "username")
+    console.log("user = ", user);
 }

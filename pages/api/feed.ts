@@ -14,26 +14,46 @@ export default async function getPosts(req: NextApiRequest, res: NextApiResponse
         if (reqUser) {
             const following = reqUser.followingUsers;
             if (following.length > 0) {
-                const postByFollowing = await User.find({ _id: { $in: following } }, "username posts") as user[];
-                for (let i = 0; i < postByFollowing.length; i++) {
-                    let posts: post[] = await Post.aggregate([{ $match: { _id: { $in: postByFollowing[i].posts } } }]);
-                    posts = posts.map(post => {
-                        post.postedByUsername = postByFollowing[0].username;
-                        //@ts-ignore
-                        post.likedByUsernames = [];
-                        post.likedBy.forEach(async likedBy => {
-                            const likedByUser: user = await User.findById(likedBy, "username").lean();
-                            //@ts-ignore
-                            //@ts-ignore
-                            post.likedByUsernames.push(likedByUser.username);
-                        })
-                        console.log("post = ", post);
-                        return post;
-                    })
-                    flatPost.push(...posts);
+                let posts: post[] = await Post.aggregate([{
+                    $lookup: {
+                        from: "users",
+                        localField: "likedBy",
+                        foreignField: "_id",
+                        let: { ids: "$likedBy" },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $in: ["$_id", "$$ids"]
+                                    }
+                                }
+                            },
+                            { $project: { username: 1, _id: 0 } },
+                        ],
+                        as: "likedByUsernames"
+                    }
+                },
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "postedBy",
+                            foreignField: "_id",
+                            let: { id: "$postedBy" },
+                            pipeline: [
+                                {
+                                    $match: {
+                                        $expr: {
+                                            $eq: ["$_id", "$$id"]
+                                        }
+                                    }
+                                },
+                                { $project: { username: 1, _id: 0 } }
+                            ],
+                            as: "postedByUsername"
+                        }
                 }
-                console.log("flatPost", flatPost);
-                res.status(200).json({ status: "ok", posts: flatPost });
+                ]).sort({ postedOn: -1 }).limit(10);
+                res.status(200).json({ status: "ok", posts: posts });
             } else {
                 res.status(200).json({ status: "error", message: "Not Following AnyOne" })
             }

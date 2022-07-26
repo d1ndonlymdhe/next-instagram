@@ -1,10 +1,16 @@
 import React, { useContext, useState } from "react";
-
-const init = {
+import { clientPost } from "../pages/home/index"
+type initType = {
+    username: string,
+    ppBlobUrl: string,
+    searchResults: { username: string, isFollowing: boolean }[],
+    feedResults: clientPost[]
+}
+const init: initType = {
     username: "",
     ppBlobUrl: "",
     searchResults: [{ username: "", isFollowing: false }],
-    feedResults: [{ postedBy: "", postedByUsername: "", profilePictureUrl: "", likedBy: [""], likedByUsernames: [""], _id: "", caption: "", imageUrl: "", likes: 0, postedOn: 0 }],
+    feedResults: [{ postedBy: "", postedByUsername: [{ username: "" }], profilePictureUrl: "", likedBy: [""], likedByUsernames: [{ username: "" }], _id: "", caption: "", imageUrl: "", likes: 0, postedOn: 0 }],
 }
 
 const GlobalContext = React.createContext(init);

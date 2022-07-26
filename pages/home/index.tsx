@@ -17,26 +17,24 @@ import Logo from "../../components/Logo";
 import { NextApiRequest, NextApiResponse } from "next";
 import { connect } from "../../utils/db";
 import User from "../../utils/User";
-import { user } from "../../utils/type";
+import { post, user } from "../../utils/type";
 import Post from "../../utils/Post";
 import Search from "../../components/Search"
-import { type } from "os";
 // import Profile from "./[profile]"
 type set<T> = React.Dispatch<React.SetStateAction<T>>
 // const server = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api";
 
-type post = {
+export type clientPost = {
     caption: string;
     likes: number;
     likedBy: string[];
-    likedByUsernames: string[];
+    likedByUsernames: { username: string }[];
     postedBy: string;
-    postedByUsername: string;
+    postedByUsername: [{ username: string }];
     postedOn: number;
     imageUrl: string;
     profilePictureUrl: string;
     _id: string;
-
 }
 type AppPropsType = { posts: string };
 
@@ -177,8 +175,7 @@ function Feed() {
     </div>
 }
 
-function FeedPost(props: { post: post, setShowLikedBy: set<ShowLikedByType> }) {
-    const [isLiked, setIsLiked] = useState(false);
+function FeedPost(props: { post: clientPost, setShowLikedBy: set<ShowLikedByType> }) {
     useEffect(() => {
         const postPictures = document.getElementsByClassName("postPicture");
         for (let i = 0; i < postPictures.length; i++) {
@@ -187,6 +184,8 @@ function FeedPost(props: { post: post, setShowLikedBy: set<ShowLikedByType> }) {
         }
     })
     const { post } = props;
+    const selfUsername = useGlobalContext().username;
+    const [isLiked, setIsLiked] = useState(post.likedByUsernames.filter(user => user.username === selfUsername).length > 0);
     const [showLikedBy, setShowLikedBy] = useState(false);
     const handleLike = (postId: string) => {
         setIsLiked(!isLiked);
@@ -205,18 +204,23 @@ function FeedPost(props: { post: post, setShowLikedBy: set<ShowLikedByType> }) {
     return <>
         {
             showLikedBy &&
-            <ModalWithBackdrop>
-                <div>nothing</div>
-                {
-                    post.likedByUsernames.map(username => {
-                        return <ProfilePictureAndUsername key={uuid()} {...{ username }}></ProfilePictureAndUsername>
-                    })
-                }
+            <ModalWithBackdrop onclick={() => { setShowLikedBy(false) }}>
+                <div className="bg-gray-400 max-w-[300px]  flex flex-col justify-center items-center px-2 pb-2 rounded-md border-2 border-black">
+                    <div className="flex flex-col my-2">
+                        <div className="text-center text-xl border-b-2 border-black mb-2">Liked By</div>
+                        {
+                                post.likedByUsernames.map(user => {
+                                    return <ProfilePictureAndUsername key={uuid()} {...{ username: user.username }}></ProfilePictureAndUsername>
+                                })
+                            }
+                        </div>
+                        <Button bonClick={(e) => { setShowLikedBy(false) }} text="exit"></Button>
+                    </div>
             </ModalWithBackdrop>
         }
         <div className="grid grid-rows-[1fr_auto_1fr] items-center h-fit w-full my-2 gap-2 ">
-            <ProfilePictureAndUsername {...{ profilePictureUrl: post.profilePictureUrl, username: post.postedByUsername }}></ProfilePictureAndUsername>
-            <div className="postPicture w-full">
+            <ProfilePictureAndUsername {...{ username: post.postedByUsername[0].username }}></ProfilePictureAndUsername>
+            <div className="postPicture w-full mb-2">
                 <img src={post.imageUrl}></img>
             </div>
             <div className="h-full w-full grid grid-rows-2">
@@ -251,7 +255,7 @@ function ProfilePictureAndUsername(props: { username: string }) {
         <div className="w-full">
             <img src={`${server}/getProfilePic?username=${username}`} className="rounded-full border-2 border-black"></img>
         </div>
-        <div onClick={() => { clickHandler() }} className="h-full w-full ml-2 grid items-center hover:cursor-pointer">
+        <div onClick={() => { clickHandler() }} className="h-full ml-2 grid items-center hover:cursor-pointer">
             {username}
         </div>
     </div>
@@ -505,7 +509,11 @@ function CreatePost() {
     return (
         <>
             {uploading &&
-                <ModalWithBackdrop>
+                <ModalWithBackdrop onclick={() => {
+                    setUploading(false);
+                    setUploadComplete(false);
+                    router.back()
+                }}>
                     <div className="h-32 w-32 bg-gray-400  rounded-md border-2 border-black flex flex-col justify-center items-center">
                         {!uploadComplete && <Spinner></Spinner>}
                         {uploadComplete && <>
@@ -542,9 +550,10 @@ function CreatePost() {
     )
 }
 
-function ModalWithBackdrop(props: PropsWithChildren) {
+function ModalWithBackdrop(props: PropsWithChildren<{ onclick?: any }>) {
+    const { onclick } = props;
     return (
-        <div className="absolute h-screen w-screen left-0 top-0 z-90  0 flex justify-center items-center backdrop-blur-sm">
+        <div className="absolute h-screen w-screen left-0 top-0 z-90  0 flex justify-center items-center backdrop-blur-sm" onClick={() => { onclick && onclick() }}>
             {props.children}
         </div>)
 }
@@ -631,36 +640,86 @@ function getLastHash(url: string) {
 }
 
 
-// export async function getServerSideProps(context: { req: NextApiRequest }) {
-//     const hash = context.req.cookies.hash!;
-//     let flatPost: post[] = [];
-//     const connection = await connect();
-//     if (hash) {
-//         const reqUser = await User.findOne({ hash: hash }, "followingUsers") as user;
-//         if (reqUser) {
-//             const following = reqUser.followingUsers;
-//             if (following.length > 0) {
-//                 const postByFollowing = await User.find({ _id: { $in: following } }, "username posts") as user[];
-//                 for (let i = 0; i < postByFollowing.length; i++) {
-//                     let posts = await Post.aggregate([{ $match: { _id: { $in: postByFollowing[i].posts } } }]).limit(10).sort({ postedOn: -1 });
-//                     posts = posts.map(post => {
-//                         post.postedByUsername = postByFollowing[0].username;
-//                         return post;
-//                     })
-//                     flatPost.push(...posts);
-//                 }
-//                 return {
-//                     props: { posts: JSON.stringify(flatPost) }
-//                 }
-//             } else {
-//                 return {
-//                     props: { posts: "[]" }
-//                 }
-//             }
-//         } else {
-//             return {
-//                 props: { posts: "[]" }
-//             }
-//         }
-//     }
-// }
+export async function getServerSideProps(context: { req: NextApiRequest }) {
+    const hash = context.req.cookies.hash!;
+    let flatPost: post[] = [];
+    const connection = await connect();
+    if (hash) {
+        const reqUser = await User.findOne({ hash: hash }, "followingUsers") as user;
+
+        if (reqUser) {
+            const following = reqUser.followingUsers;
+            if (following.length > 0) {
+                let posts: post[] = await Post.aggregate([{
+                    $lookup: {
+                        from: "users",
+                        localField: "followingUsers",
+                        foreignField: "_id",
+                        let: { followingUsers: "$followingUsers", selfId: "$_id" },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $in: ["$_id", "$$followingUsers"]
+                                    }
+                                }
+                            }
+                        ],
+                        as: "followingusers"
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "likedBy",
+                        foreignField: "_id",
+                        let: { ids: "$likedBy" },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $in: ["$_id", "$$ids"]
+                                    }
+                                }
+                            },
+                            { $project: { username: 1, _id: 0 } },
+                        ],
+                        as: "likedByUsernames"
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "postedBy",
+                        foreignField: "_id",
+                        let: { id: "$postedBy" },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $eq: ["$_id", "$$id"]
+                                    }
+                                }
+                            },
+                            { $project: { username: 1, _id: 0 } }
+                        ],
+                        as: "postedByUsername"
+                    }
+                }
+                ]).sort({ postedOn: -1 }).limit(10);
+                console.log(posts)
+                return {
+                    props: { posts: JSON.stringify(posts) }
+                }
+            } else {
+                return {
+                    props: { posts: "[]" }
+                }
+            }
+        } else {
+            return {
+                props: { posts: "[]" }
+            }
+        }
+    }
+}

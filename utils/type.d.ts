@@ -18,7 +18,7 @@ export type post = {
     likes: number;
     likedBy: string[];
     likedByUsernames: string[];
-    postedBy: string;
+    postedBy: { username: string }[];
     uploader: user;
     postedByUsername: string;
     postedOn: number;
