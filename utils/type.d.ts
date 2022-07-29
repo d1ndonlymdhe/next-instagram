@@ -1,10 +1,12 @@
-export type user = {
+export interface user {
     username: string;
     password?: string;
     followingCount: number;
     followingUsers: { username: string }[];
     followersCount: number;
     followerUsers: { username: string }[];
+    friendsCount: number;
+    friendUsers: { username: string }[];
     firstLogin: boolean;
     hash: string;
     bio?: string;
@@ -13,7 +15,7 @@ export type user = {
     save: () => void
 }
 
-export type post = {
+export interface post {
     caption: string;
     likes: number;
     likedBy: string[];
@@ -26,7 +28,7 @@ export type post = {
     save: () => void
 }
 
-export type updateUserOptionsType = {
+export interface updateUserOptionsType {
     following?: number;
     followersCount?: number;
     password?: string;

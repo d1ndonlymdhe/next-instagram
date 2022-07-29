@@ -8,9 +8,7 @@ const postSchema = new Schema({
     postedBy: mongoose.SchemaTypes.ObjectId,
     postedByUsername: [{ username: String }],
     likedBy: [mongoose.SchemaTypes.ObjectId],
-    likedByUsernames: {
-        type: { type: Schema.Types.ObjectId, ref: 'User' }
-    },
+    likedByUsernames: [{ username: String }],
     likes: {
         type: Number,
         default: 0

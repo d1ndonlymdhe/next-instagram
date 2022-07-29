@@ -10,9 +10,9 @@ export default async function search(req: NextApiRequest, res: NextApiResponse) 
         if (typeof searchTerm === "string") {
             const connection = await connect();
             //limit + 1 because one user may be the same as the requesting user
-            let results: user[] = [];
+            let results: any[] = [];
             try {
-                results = await User.find({ username: { $regex: searchTerm } }, "_id username").limit(limit + 1) as user[]
+                results = await User.find({ username: { $regex: searchTerm } }, "_id username").limit(limit + 1);
             }
             catch (err) {
                 console.log(err);

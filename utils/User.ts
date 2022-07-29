@@ -25,6 +25,14 @@ const userSchema = new Schema({
         type: [mongoose.SchemaTypes.ObjectId],
         ref: "User"
     },
+    friendUsers: {
+        type: [mongoose.SchemaTypes.ObjectId],
+        ref: "User"
+    },
+    friendsCount: {
+        type: String,
+        default: 0
+    },
     firstLogin: {
         type: Boolean,
         default: true

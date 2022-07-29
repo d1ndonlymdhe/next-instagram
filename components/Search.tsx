@@ -111,6 +111,7 @@ export default function Search(props: SearchPropType) {
                                     e.stopPropagation();
                                     if (!result.isFollowing) {
                                         //try extracting logic to fucntion
+                                        console.log("toFollow = ", result.username)
                                         axios.post(`${server}/follow`, { hash: Cookies.get("hash"), toFollow: result.username }).then(res => {
                                             console.log("follow res = ", res);
                                             if (res.data.status === "ok") {

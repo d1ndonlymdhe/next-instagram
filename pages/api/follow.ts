@@ -1,35 +1,42 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { findUser } from "../../utils/db";
-import User from "../../utils/User";
-import user from "../../utils/type";
-// import User as UserType from "../../utils/User";
+import { findUser, connect } from "../../utils/db";
+import { user } from "../../utils/type";
+import User from "../../utils/User"
+type mutatedUser = user & {
+    followingUsers: String[];
+    followerUsers: String[];
+    friendUsers: String[];
+}
 export default async function follow(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === "POST") {
         const { toFollow, hash } = req.body;
-
-        const selectedUser = await findUser(undefined, hash);
-        const toFollowUser = await findUser(toFollow);
-
+        const selectedUser = await User.findOne({ hash: hash }) as mutatedUser;
+        const toFollowUser = await User.findOne({ username: toFollow }) as mutatedUser;
         if (selectedUser) {
             if (toFollowUser) {
                 const toFollowId = toFollowUser._id;
+                console.log("inside follow ts");
                 console.log("selected user: ", selectedUser);
+                console.log("following user: ", toFollowUser)
+                //@ts-ignore
                 if (selectedUser.followingUsers.includes(toFollowId)) {
-                    // res.setHeader("Content Type", "application/json");
-                    // res.send(JSON.stringify({ status: "error", message: { text: "Already following" } }));
                     res.status(200).json({ status: "error", message: { text: "Already following" } })
                 } else {
+                    //@ts-ignore
                     selectedUser.followingUsers.push(toFollowId);
-                    // selectedUser.followingCount++;
                     selectedUser.followingCount = selectedUser.followingUsers.length;
 
+                    //@ts-ignore
                     toFollowUser.followerUsers.push(selectedUser._id);
                     toFollowUser.followersCount = toFollowUser.followerUsers.length;
+                    if (toFollowUser.followingUsers.includes(selectedUser._id)) {
+                        selectedUser.friendUsers.push(toFollowUser._id);
+                        selectedUser.friendsCount = selectedUser.friendUsers.length;
+                        toFollowUser.friendUsers.push(selectedUser._id);
+                        toFollowUser.friendsCount = toFollowUser.friendUsers.length
+                    }
                     selectedUser.save();
                     toFollowUser.save();
-                    // res.setHeader("Content Type", "application/json");
-
-                    // res.send(JSON.stringify({ status: "ok", message: { text: "Followed" } }));
                     res.status(200).json({ status: "ok", message: { text: "Followed" } })
                 }
             }

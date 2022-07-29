@@ -124,15 +124,6 @@ function Home(props: AppPropsType) {
                         </Wrapper>
                     }
                     {
-                        activeTab === "profile" &&
-                        <Wrapper>
-
-                            <Profile></Profile>
-                                <Footer {...{ activeTab, setActiveTab }}></Footer>
-                            {/* <Profile></Profile> */}
-                        </Wrapper>
-                    }
-                    {
                         activeTab === "post" &&
                         <Wrapper>
                                 <div className="grid grid-cols-[5fr_95fr] justify-center items-center w-full">
@@ -141,6 +132,26 @@ function Home(props: AppPropsType) {
                                 </div>
                                 <CreatePost></CreatePost>
                                 <Footer {...{ activeTab, setActiveTab }}></Footer>
+                        </Wrapper>
+                    }
+                    {
+                        activeTab === "chat" &&
+                        <Wrapper>
+                                <div className="grid grid-cols-[5fr_95fr] justify-center items-center w-full">
+                                    <ArrowLeftIcon onClick={() => { router.back() }}></ArrowLeftIcon>
+                                    <div className="text-center text-xl">Chats</div>
+                                </div>
+                                <Chat></Chat>
+                                <Footer {...{ activeTab, setActiveTab }}></Footer>
+                        </Wrapper>
+                    }
+                    {
+                        activeTab === "profile" &&
+                        <Wrapper>
+
+                            <Profile></Profile>
+                            <Footer {...{ activeTab, setActiveTab }}></Footer>
+                            {/* <Profile></Profile> */}
                         </Wrapper>
                     }
                 </div>
@@ -163,7 +174,6 @@ function Feed() {
         }
     </div>
 }
-
 function FeedPost(props: { post: clientPost }) {
     useEffect(() => {
         const postPictures = document.getElementsByClassName("postPicture");
@@ -225,6 +235,10 @@ function FeedPost(props: { post: clientPost }) {
             </div>
         </div>
     </>
+}
+
+function Chat() {
+    return <div>Chat</div>
 }
 
 function ProfilePictureAndUsername(props: { username: string }) {
@@ -445,7 +459,7 @@ function Footer(props: footerProps) {
         {ReturnIconForFooter(activeTab, "home", HomeIcon, HomeIconSolid)}
         {ReturnIconForFooter(activeTab, "search", SearchIcon, SearchIconSolid)}
         {ReturnIconForFooter(activeTab, "post", PlusIcon, PlusIconSolid)}
-        {ReturnIconForFooter(activeTab, "shopping", ShoppingBagIcon, ShoppingBagIconSolid)}
+        {ReturnIconForFooter(activeTab, "chat", ChatIcon, ChatIconSolid)}
         {ReturnIconForFooter(activeTab, "profile", UserIcon, UserIconSolid)}
     </div>
 }
