@@ -413,6 +413,7 @@ function Profile() {
     const [showFollowingUsers, setShowFollowingUsers] = useState(false);
     const [username] = useState((typeof router.query.username == "string") ? router.query.username : "");
     const [ppUrl, setPpUrl] = useState("")
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
     useEffect(() => {
         axios.get(`${server}/userinfo`, { params: { username } }).then(async userInfoRes => {
             if (userInfoRes.data.status === "ok") {
@@ -501,6 +502,16 @@ function Profile() {
                 }} text={isfollowing ? "following" : "follow"} className={`w-full ${!isfollowing && "hover:bg-blue-500"} ${isfollowing && "hover:bg-gray-400"}`}></Button>}
         </div >
     </div>
+    const logoutModal = <ModalWithBackdrop onclick={() => { setShowLogoutModal(false) }} title="Confirm Logout">
+        <div className="grid grid-cols-2">
+            <div className="flex justify-center items-center">
+                <div className="text-center">
+                    <p>Are you sure you want to logout?</p>
+                </div>
+            </div>
+            <Button bonClick={() => { localStorage.clear(); Cookies.set("hash", ""); window.location.href = "/"; }} text="Logout" className="bg-red-400" ></Button>
+        </div>
+    </ModalWithBackdrop>
     return <>
         {
             showFollowerUsers &&
@@ -534,16 +545,21 @@ function Profile() {
         {/* Topbar with logout button */}
         {
             (username === selfUsername) &&
-            <div className="h-full w-full items-center grid grid-cols-[10fr_80fr_10fr] gap-5">
-                <ArrowLeftIcon className="hover:cursor-pointer" onClick={() => {
-                    router.back()
-                }}></ArrowLeftIcon>
-                <span className="text-xl">{username}</span>
-                <LogoutIcon className="text-red-600 hover:cursor-pointer" onClick={(e) => {
-                    e.stopPropagation();
-
-                }}></LogoutIcon>
-            </div>
+            <>
+                {
+                    showLogoutModal && logoutModal
+                }
+                <div className="h-full w-full items-center grid grid-cols-[10fr_80fr_10fr] gap-5">
+                    <ArrowLeftIcon className="hover:cursor-pointer" onClick={() => {
+                        router.back()
+                    }}></ArrowLeftIcon>
+                    <span className="text-xl">{username}</span>
+                    <LogoutIcon className="text-red-600 hover:cursor-pointer" onClick={(e) => {
+                        e.stopPropagation();
+                        setShowLogoutModal(true);
+                    }}></LogoutIcon>
+                </div>
+            </>
         }
         <div className="h-full w-full mt-5 grid grid-rows-[2fr_8fr]">
             {userInfoUI}
