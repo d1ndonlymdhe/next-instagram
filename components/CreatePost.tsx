@@ -20,9 +20,13 @@ export default function CreatePost() {
     const [uploadComplete, setUploadComplete] = useState(false);
     // let heightOfPlaceHolderChanged = false;
     useEffect(() => {
-        window.onresize = (e) => {
+        const callback = (e: any) => {
             const placeHolder = document.getElementById("imagePlaceholder")!;
             placeHolder.style.height = window.getComputedStyle(placeHolder).width;
+        }
+        window.addEventListener("resize", callback);
+        return () => {
+            window.removeEventListener("resize", callback);
         }
     })
     useEffect(() => {

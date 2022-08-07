@@ -1,5 +1,11 @@
 import { Schema, model, models } from "mongoose";
 import mongoose from "mongoose";
+const messageSchema = new Schema({
+    to: String,
+    from: String,
+    roomId: String,
+    content: String,
+})
 const userSchema = new Schema({
     username: {
         type: String,
@@ -44,8 +50,13 @@ const userSchema = new Schema({
         type: String,
         default: ""
     },
-    posts: [mongoose.SchemaTypes.ObjectId]
+    posts: [mongoose.SchemaTypes.ObjectId],
+    pendingMessages: {
+        type: [mongoose.SchemaTypes.ObjectId],
+        ref: "Message"
+    }
 })
+
 
 const User = models.User || model("User", userSchema);
 

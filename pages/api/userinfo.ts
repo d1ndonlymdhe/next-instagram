@@ -10,7 +10,7 @@ export default async function userinfo(req: NextApiRequest, res: NextApiResponse
         findBy = { hash }
     }
     const connection = await connect()
-    const user = await User.findOne(findBy, "username followingCount followersCount firstLogin bio posts").populate("followerUsers", "username").populate("followingUsers", "username")
+    const user = await User.findOne(findBy, "username followingCount followersCount firstLogin bio posts").populate("followerUsers", "username").populate("followingUsers", "username").populate("friendUsers", "username");
     if (user !== null && user !== undefined) {
         res.status(200).json({
             status: "ok",

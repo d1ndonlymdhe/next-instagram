@@ -12,7 +12,16 @@ export interface user {
     bio?: string;
     _id: string;
     posts: { posts: posts }[];
+    pendingMessages?: message[];
     save: () => void
+}
+
+export interface message {
+    to: string;
+    from: string;
+    content: string;
+    roomId: string;
+    save: () => void;
 }
 
 export interface post {

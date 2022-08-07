@@ -1,16 +1,49 @@
 import React, { useContext, useState } from "react";
 import { clientPost } from "../pages/home/index"
+
+type message = {
+    to: string;
+    content: string;
+    from: string;
+    roomId: string;
+}
+type room = {
+    id: string;
+    members: string[];
+    messages: message[];
+}
 type initType = {
     username: string,
     ppBlobUrl: string,
     searchResults: { username: string, isFollowing: boolean }[],
+    friends: { username: string }[]
     feedResults: clientPost[]
+    rooms: room[],
+    chatView: boolean,
+    pendingMessages?: message[]
 }
 const init: initType = {
     username: "",
     ppBlobUrl: "",
+    friends: [{ username: "" }],
     searchResults: [{ username: "", isFollowing: false }],
-    feedResults: [{ postedBy: "", postedByUsername: [{ username: "" }], profilePictureUrl: "", likedBy: [""], likedByUsernames: [{ username: "" }], _id: "", caption: "", imageUrl: "", likes: 0, postedOn: 0 }],
+    feedResults: [
+        {
+            postedBy: "",
+            postedByUsername: [{ username: "" }],
+            profilePictureUrl: "",
+            likedBy: [""],
+            likedByUsernames: [{ username: "" }]
+            , _id: "",
+            caption: "",
+            imageUrl: "",
+            likes: 0,
+            postedOn: 0
+        }
+    ],
+    //@ts-ignore
+    rooms: [],
+    chatView: false,
 }
 
 const GlobalContext = React.createContext(init);

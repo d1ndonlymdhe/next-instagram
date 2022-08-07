@@ -11,7 +11,7 @@ export default function ModalWithBackdrop(props: PropsWithChildren<{ onclick?: a
                         props.children
                     }
                 </div>
-                <Button bonClick={(e) => { e.stopPropagation(); onclick() }} text="exit"></Button>
+                <Button bonClick={(e) => { onclick() }} text="exit"></Button>
             </div>
         </div>
     )

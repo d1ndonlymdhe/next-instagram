@@ -30,13 +30,11 @@ export default function SignUpPage() {
         }
     }
     const handleLogin = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault()
         router.push("/getstarted")
         // window.location.href = "/getstarted"
     }
     const handleSignup = (e: React.MouseEvent<HTMLButtonElement>) => {
         console.log("ok")
-        e.preventDefault();
         if (isSignUpButtonActive) {
             const username = usernameRef.current?.value;
             const password = passwordRef.current?.value;
@@ -65,13 +63,14 @@ export default function SignUpPage() {
                     {(signUpSuccess !== "") && <Success message={signUpSuccess} className={`my-5 w-[98%] text-center py-2`}></Success>}
                     <div id="loginContainer" className='w-full'>
                         <form onSubmit={(e) => {
+                            e.preventDefault();
                             //@ts-ignore
-                            handleSignup(e)
+                            handleSignup(e);
                         }}>
                             <div id="loginFormWrapper" className='flex flex-col justify-around items-center content-center w-full'>
                                 <Input name="username" ref={usernameRef} autoFocus={true} placeholder="Username" type="text" className='w-full h-8 mb-2 pl-2' onChange={setSignUpButtonColorOnChange}></Input>
                                 <Input name="password" ref={passwordRef} placeholder="Password" type="password" className='w-full h-8 pl-2' onChange={setSignUpButtonColorOnChange}></Input>
-                                <Button text="Sign Up" bonClick={(e) => { handleSignup(e) }} className={`my-2 bg-neutral border-[1px] rounded-md border-black py-2 ${signUpButtonColor}`}></Button>
+                                <Button text="Sign Up" bonClick={(e) => { }} className={`my-2 bg-neutral border-[1px] rounded-md border-black py-2 ${signUpButtonColor}`}></Button>
                             </div>
                         </form>
                     </div>

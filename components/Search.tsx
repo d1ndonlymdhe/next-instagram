@@ -108,7 +108,6 @@ export default function Search(props: SearchPropType) {
                                     <div className="text-center mx-5">{result.username}</div>
                                 </div>
                                 <Button key={uuid()} bonClick={(e) => {
-                                    e.stopPropagation();
                                     if (!result.isFollowing) {
                                         //try extracting logic to fucntion
                                         console.log("toFollow = ", result.username)
