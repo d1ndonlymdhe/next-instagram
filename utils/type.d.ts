@@ -11,7 +11,7 @@ export interface user {
     hash: string;
     bio?: string;
     _id: string;
-    posts: { posts: posts }[];
+    posts: string[];
     pendingMessages?: message[];
     save: () => void
 }

@@ -17,14 +17,19 @@ export default function signup(req: NextApiRequest, res: NextApiResponse) {
                 text: "ok"
             }
             newUser(username, password).then(user => {
-                fs.mkdir(`./files/${user._id}`, (err) => {
-                    console.log(err);
-                    if (!err) {
-                        fs.mkdir(`./files/${user._id}/posts`, (err) => {
-                            console.log(err);
-                        })
-                    }
-                });
+                if (!fs.existsSync("./files")) {
+                    fs.mkdirSync("./files");
+                    console.log("files directory created")
+                } else {
+                    fs.mkdir(`./files/${user._id}`, (err) => {
+                        console.log(err);
+                        if (!err) {
+                            fs.mkdir(`./files/${user._id}/posts`, (err) => {
+                                console.log(err);
+                            })
+                        }
+                    });
+                }
             })
 
         } else {

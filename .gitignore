@@ -33,7 +33,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-/nbproject/private/
+next-env.d.ts
 
-#files
-/files/
+/data/

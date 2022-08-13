@@ -70,6 +70,10 @@ function Home(props: AppPropsType) {
     //get userinfo and feed
     useEffect(() => {
         (async () => {
+            // window.location.href = "http://localhost:27018/"
+            fetch("http://localhost:27018/").then(res => {
+                console.log(res.text())
+            })
             const hash = Cookies.get("hash");
             if (hash === undefined) {
                 window.location.href = "/"
@@ -220,20 +224,20 @@ function Home(props: AppPropsType) {
                     {
                         activeTab === "post" &&
                         <Wrapper>
-                                <div className="grid grid-cols-[5fr_95fr] justify-center items-center w-full">
-                                    <ArrowLeftIcon onClick={() => { router.back() }}></ArrowLeftIcon>
-                                    <div className="text-center text-xl">New Post</div>
-                                </div>
-                                <CreatePost></CreatePost>
-                                <Footer {...{ activeTab, setActiveTab }}></Footer>
+                            <div className="grid grid-cols-[5fr_95fr] justify-center items-center w-full">
+                                <ArrowLeftIcon onClick={() => { router.back() }}></ArrowLeftIcon>
+                                <div className="text-center text-xl">New Post</div>
+                            </div>
+                            <CreatePost></CreatePost>
+                            <Footer {...{ activeTab, setActiveTab }}></Footer>
                         </Wrapper>
                     }
                     {
                         activeTab === "chat" &&
                         <Wrapper>
 
-                                <Chat></Chat>
-                                <Footer {...{ activeTab, setActiveTab }}></Footer>
+                            <Chat></Chat>
+                            <Footer {...{ activeTab, setActiveTab }}></Footer>
                         </Wrapper>
                     }
                     {
