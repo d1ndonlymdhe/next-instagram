@@ -25,7 +25,7 @@ import Post from "../../utils/Post";
 import { post, user } from "../../utils/type";
 import User from "../../utils/User";
 import Profile from "../../components/Profile";
-const socket = io("http://localhost:4000")
+const socket = io("http://103.195.6.36:4000")
 // import Profile from "./[profile]"
 type set<T> = React.Dispatch<React.SetStateAction<T>>
 // const server = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api";
