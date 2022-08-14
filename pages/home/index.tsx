@@ -26,10 +26,7 @@ import { post, user } from "../../utils/type";
 import User from "../../utils/User";
 import Profile from "../../components/Profile";
 const socket = io("http://localhost:4000")
-// import Profile from "./[profile]"
 type set<T> = React.Dispatch<React.SetStateAction<T>>
-// const server = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/api";
-
 export type clientPost = {
     caption: string;
     likes: number;
@@ -63,17 +60,14 @@ function Home(props: AppPropsType) {
         const tabHash = getLastHash(window.location.toString());
         if (tabHash) {
             setActiveTab(tabHash);
+            console.log("set tab")
         } else {
             setActiveTab("home");
         }
-    })
+    }, [setActiveTab])
     //get userinfo and feed
     useEffect(() => {
         (async () => {
-            // window.location.href = "http://localhost:27018/"
-            // fetch("http://localhost:27018/").then(res => {
-            //     console.log(res.text())
-            // })
             const hash = Cookies.get("hash");
             if (hash === undefined) {
                 window.location.href = "/"
@@ -94,6 +88,7 @@ function Home(props: AppPropsType) {
                     pendingMessages.forEach(m => {
                         storedMessages.push(m)
                     })
+                    // localStorage.messages = JSON.stringify(storedMessages);
                     const newState: typeof globalContext = { ...globalContext, username: self.username, friends: self.friendUsers, pendingMessages: storedMessages }
                     console.log("checking = ", (newState.pendingMessages && newState.pendingMessages.length > 0))
                     if (newState.pendingMessages && newState.pendingMessages.length > 0) {
@@ -101,7 +96,7 @@ function Home(props: AppPropsType) {
                         socket.emit("joinRooms", { roomIds: roomsToBeJoinedIds, username: self.username })
                         for (let i = 0; i < roomsToBeJoinedIds.length; i++) {
                             const messages = newState.pendingMessages.filter(message => message.roomId === roomsToBeJoinedIds[i])
-                            const members = [self.username, messages[0].from];
+                            let members = [self.username, messages[0].from !== self.username ? messages[0].from : messages[0].to];
                             const room: room = { messages: messages, members: members, id: roomsToBeJoinedIds[i] }
                             newState.rooms.push(room);
                         }
@@ -164,13 +159,14 @@ function Home(props: AppPropsType) {
     }, []);
     useEffect(() => {
         const roomCreationCallback = (payload: { status: string, roomId: string, members: string[] }) => {
-            console.log("room created")
+            console.log("room")
             const { roomId, members } = payload;
             const newState = Object.assign({}, globalContext);
             const roomAlreadyExists = newState.rooms.filter(room => room.id === roomId).length > 0
             if (!roomAlreadyExists) {
                 newState.rooms.push({ id: roomId, members: members, messages: [] })
             }
+            console.log("state to be applied = ", newState);
             globalUpdateContext(newState);
         }
         socket.on("roomCreated", roomCreationCallback);
