@@ -14,7 +14,8 @@ import ProfilePictureAndUsername from "./ProfilePictureAndUsername";
 //@ts-ignore
 import uuid from "react-uuid"
 //to load profile route to /home?username=username#profile
-export default function Profile() {
+export default function Profile(props: { username?: string }) {
+    console.log("rerender")
     const globalState = useGlobalContext();
     const selfUsername = globalState.username;
     const router = useRouter();
@@ -33,10 +34,11 @@ export default function Profile() {
     const [isfollowing, setIsFollowing] = useState(false);
     const [showFollowerUsers, setShowFollowerUsers] = useState(false);
     const [showFollowingUsers, setShowFollowingUsers] = useState(false);
-    const [username] = useState((typeof router.query.username == "string") ? router.query.username : "");
+    const [username, setUsername] = useState(props.username || "");
     const [ppUrl, setPpUrl] = useState("")
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     useEffect(() => {
+        // setUsername((typeof router.query.username == "string") ? router.query.username : "")
         axios.get(`${server}/userinfo`, { params: { username } }).then(async userInfoRes => {
             if (userInfoRes.data.status === "ok") {
                 axios.get(`${server}/getPostsFromUser`, { params: { username } }).then(res => {
@@ -140,7 +142,11 @@ export default function Profile() {
             <ModalWithBackdrop onclick={() => { setShowFollowerUsers(false) }} title="Followers">
                 {
                     userInfo.followerUsers.map(follower => {
-                        return <ProfilePictureAndUsername key={uuid()} username={follower.username}></ProfilePictureAndUsername>
+                        return <div className="m-2" key={uuid()}>
+                            <ProfilePictureAndUsername key={uuid()} username={follower.username} onClick={() => {
+                                router.push(`/profile/${follower.username}`)
+                            }}></ProfilePictureAndUsername>
+                        </div>
                     })
                 }
             </ModalWithBackdrop>
@@ -150,7 +156,11 @@ export default function Profile() {
             <ModalWithBackdrop onclick={() => { setShowFollowingUsers(false) }} title="Following">
                 {
                     userInfo.followingUsers.map(following => {
-                        return <ProfilePictureAndUsername key={uuid()} username={following.username}></ProfilePictureAndUsername>
+                        return <div className="m-2" key={uuid()}>
+                            <ProfilePictureAndUsername key={uuid()} username={following.username} onClick={() => {
+                                router.push(`profile/${following.username}`);
+                            }}></ProfilePictureAndUsername>
+                        </div>
                     })
                 }
             </ModalWithBackdrop>

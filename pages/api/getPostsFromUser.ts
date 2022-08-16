@@ -58,7 +58,6 @@ export default async function getPostsFromUser(req: NextApiRequest, res: NextApi
                     }
                 }
             ]).sort({ postedOn: -1 })
-            // console.log(posts)
             res.status(200).json({ status: "ok", posts: posts })
         } else {
             res.status(200).json({ status: "error" })

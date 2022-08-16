@@ -25,6 +25,7 @@ import Post from "../../utils/Post";
 import { post, user } from "../../utils/type";
 import User from "../../utils/User";
 import Profile from "../../components/Profile";
+import { Wrapper } from "../../components/Wrapper";
 const socket = io("http://localhost:4000")
 type set<T> = React.Dispatch<React.SetStateAction<T>>
 export type clientPost = {
@@ -54,17 +55,20 @@ function Home(props: AppPropsType) {
     const globalUpdateContext = useGlobalUpdateContext();
     const [isSignedIn, setIsSignedIn] = useState(false);
     const [activeTab, setActiveTab] = useState("home");
-    const [visitingProfile, setVisitingProfile] = useState("");
+    const [visitingProfile, setVisitingProfile] = useState(globalContext.username);
+    const [val, setval] = useState(0)
     const router = useRouter();
     useEffect(() => {
         const tabHash = getLastHash(window.location.toString());
         if (tabHash) {
             setActiveTab(tabHash);
+            setVisitingProfile((typeof router.query.username == "string") ? router.query.username : visitingProfile)
+            // setval(val + 1)
             console.log("set tab")
         } else {
             setActiveTab("home");
         }
-    }, [setActiveTab])
+    })
     //get userinfo and feed
     useEffect(() => {
         (async () => {
@@ -88,7 +92,7 @@ function Home(props: AppPropsType) {
                     pendingMessages.forEach(m => {
                         storedMessages.push(m)
                     })
-                    // localStorage.messages = JSON.stringify(storedMessages);
+                    localStorage.messages = JSON.stringify(storedMessages);
                     const newState: typeof globalContext = { ...globalContext, username: self.username, friends: self.friendUsers, pendingMessages: storedMessages }
                     console.log("checking = ", (newState.pendingMessages && newState.pendingMessages.length > 0))
                     if (newState.pendingMessages && newState.pendingMessages.length > 0) {
@@ -171,7 +175,6 @@ function Home(props: AppPropsType) {
         }
         socket.on("roomCreated", roomCreationCallback);
         const messageCallback = (payload: { message: string, to: string, from: string, roomId: string }) => {
-            console.log("room joined")
             const { roomId, message, to, from } = payload;
             const newState = Object.assign({}, globalContext);
             const room = newState.rooms.filter(room => {
@@ -240,9 +243,8 @@ function Home(props: AppPropsType) {
                         activeTab === "profile" &&
                         <Wrapper>
 
-                            <Profile></Profile>
-                            <Footer {...{ activeTab, setActiveTab }}></Footer>
-                            {/* <Profile></Profile> */}
+                                <Profile username={visitingProfile} key={"ProfileTab"}></Profile>
+                                <Footer {...{ activeTab, setActiveTab }}></Footer>
                         </Wrapper>
                     }
                 </div>
@@ -261,21 +263,20 @@ function Chat() {
     const [selectedUsername, setSelectedUsername] = useState("");
     const [chatView, setChatView] = useState(false);
     const globalUpdateContext = useGlobalUpdateContext();
+
     const router = useRouter();
     useEffect(() => {
-        const callback = (payload: { status: string, roomId: string, members: string[] }) => {
-            if (selectedUsername !== "") {
-                setChatView(true);
-            }
+        const roomCreationErrorCallback = (payload: { message: string }) => {
+            alert(payload.message)
         }
-        socket.on("roomCreated", callback);
+        socket.on("room creation error", roomCreationErrorCallback);
         return () => {
-            socket.off("roomCreated", callback);
+            socket.off("room creation error", roomCreationErrorCallback);
         }
     }, [socket, globalContext, globalUpdateContext])
     const initaiteChat = (username: string) => {
         console.log("initiate Chat")
-        socket.emit("createRoom", { members: [globalContext.username, username] });
+        socket.emit("createRoom", { self: globalContext.username, reciever: selectedUsername });
     }
     if (chatView) {
         const rooms = globalContext.rooms;
@@ -316,7 +317,6 @@ function Chat() {
                 }
             </div>
             <div className="h-full w-full flex align-baseline justify-end">
-
                 <Button bonClick={(e) => {
                     setShowFriends(!showFriends)
                 }} text="Friends" className="h-fit w-fit"></Button>
@@ -350,10 +350,9 @@ function ChatView(props: { username: string, room: room, setChatView: set<boolea
         const sendThis = { from: selfUsername, to: username, message: message, roomId: room.id }
         console.log("sendThis = ", sendThis);
         socket.emit("message", sendThis)
-
     }
     useEffect(() => {
-        axios.post("api/removePendingMessages", { roomId: room.id })
+        axios.post("api/removePendingMessagesFromRoom", { roomId: room.id })
     }, []);
     return <>
         <div className="grid grid-cols-[5fr_95fr] justify-center items-center w-full gap-5">
@@ -390,8 +389,6 @@ function ChatView(props: { username: string, room: room, setChatView: set<boolea
     </>
 
 }
-
-
 function Topbar() {
     return <div className="w-full h-full overflow-hidden  content-center flex items-center px-3">
         <div className="w-full grid grid-cols-[7fr_2fr] content-center">
@@ -411,12 +408,10 @@ function Topbar() {
         </div>
     </div>
 }
-
 type footerProps = {
     activeTab: string;
     setActiveTab: set<string>;
 }
-
 function Footer(props: footerProps) {
     const { activeTab, setActiveTab } = props;
     return <div className="grid grid-cols-5 gap-16  w-full h-full items-center justify-center align-baseline sticky bg-white">
@@ -428,9 +423,6 @@ function Footer(props: footerProps) {
     </div>
 }
 
-export function Wrapper(props: PropsWithChildren) {
-    return <div className="grid grid-rows-[6%_88%_6%] h-full w-full max-w-[500px] overflow-hidden bg-white box-border rounded-lg px-2 pt-2 font-Roboto">{props.children}</div>
-}
 
 function ReturnIconForFooter(activeTab: string, tabName: string, outline: any, solid: any) {
     const { username } = useGlobalContext();
@@ -499,9 +491,8 @@ export async function getServerSideProps(context: { req: NextApiRequest }) {
         from: string;
     }
     const hash = context.req.cookies.hash!;
-    let flatPost: post[] = [];
-    const connection = await connect();
     if (hash) {
+        const connection = await connect();
         //@ts-ignore
         const reqUser = await User.findOne({ hash: hash }, "username followingCount followersCount firstLogin bio posts pendingMessages")
             .populate("followerUsers", "username")
@@ -514,8 +505,11 @@ export async function getServerSideProps(context: { req: NextApiRequest }) {
             let messages: message[] = []
             if (pendingMessagesCount && pendingMessagesCount > 0) {
                 messages = await Message.find({ _id: { $in: reqUser.pendingMessages } });
+                await Message.deleteMany({ _id: { $in: reqUser.pendingMessages } });
+                reqUser.pendingMessages = [];
                 console.log("messages = ", messages);
             }
+            reqUser.save();
             if (following.length > 0) {
                 let posts: post[] = await Post.aggregate([
                     {
