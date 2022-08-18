@@ -111,7 +111,7 @@ export default function Profile(props: ProfileProps) {
                 </div>
                 <div className="h-full w-full mt-5 grid grid-rows-[2fr_8fr]">
                     {userInfoUI}
-                    <div className="h-full w-full overflow-scroll">
+                    <div className="h-full w-full overflow-auto">
                         {
                             posts.map(post => {
                                 //@ts-ignore
@@ -119,8 +119,7 @@ export default function Profile(props: ProfileProps) {
                             })
                         }
                     </div>
-
-                </div >
+                </div>
                 <div></div>
             </div>
         </div>
