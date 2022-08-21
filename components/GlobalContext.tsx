@@ -1,49 +1,71 @@
-import React, { useState, createContext } from 'react';
+import React, { useContext, useState } from "react";
+import { clientPost } from "../pages/home/index"
 
-
-
-
-type GlobalContextType = {
-    username: string;
-    setUsername: (username: string) => void
-    ppBlobUrl?: string;
-    setPpBlobUrl?: (ppBlobUrl: string) => void
-    searchResults: string[];
-    setSearchResults: (searchResults: string[]) => void
+type message = {
+    to: string;
+    content: string;
+    from: string;
+    roomId: string;
 }
-export const GlobalContext = createContext<GlobalContextType>({
+type room = {
+    id: string;
+    members: string[];
+    messages: message[];
+}
+type initType = {
+    username: string,
+    ppBlobUrl: string,
+    searchResults: { username: string, isFollowing: boolean }[],
+    friends: { username: string }[]
+    feedResults: clientPost[]
+    rooms: room[],
+    chatView: boolean,
+    pendingMessages?: message[]
+}
+const init: initType = {
     username: "",
-    setUsername: () => { },
     ppBlobUrl: "",
-    setPpBlobUrl: () => { },
-    searchResults: [] as string[],
-    setSearchResults: () => { }
-})
-export const GlobalContextProvider = (props: React.PropsWithChildren) => {
-    const setUsername = (username: string) => {
-        const newState = Object.assign({}, state);
-        newState.username = username;
+    friends: [{ username: "" }],
+    searchResults: [{ username: "", isFollowing: false }],
+    feedResults: [
+        {
+            postedBy: "",
+            postedByUsername: [{ username: "" }],
+            profilePictureUrl: "",
+            likedBy: [""],
+            likedByUsernames: [{ username: "" }]
+            , _id: "",
+            caption: "",
+            imageUrl: "",
+            likes: 0,
+            postedOn: 0
+        }
+    ],
+    //@ts-ignore
+    rooms: [],
+    chatView: false,
+}
+
+const GlobalContext = React.createContext(init);
+const GlobalUpdateContext = React.createContext((newState: typeof init) => { });
+
+export function useGlobalContext() {
+    return useContext(GlobalContext);
+}
+export function useGlobalUpdateContext() {
+    return useContext(GlobalUpdateContext);
+}
+
+//@ts-ignore
+export function GlobalContextProvider(props: React.PropsWithChildren) {
+    const { children } = props;
+    const [state, setState] = useState(init);
+    function updateState(newState: any) {
         setState(newState);
     }
-    const setPpBlobUrl = (ppBlobUrl: string) => {
-        setState({ ...state, ppBlobUrl: ppBlobUrl });
-    }
-    const setSearchResults = (searchResults: string[]) => {
-        setState({ ...state, searchResults: searchResults });
-    }
-    const initState = {
-        username: "",
-        setUsername: setUsername,
-        ppBlobUrl: "",
-        setPpBlobUrl: setPpBlobUrl,
-        searchResults: [] as string[],
-        setSearchResults: setSearchResults,
-    }
-    const [state, setState] = useState(initState);
-
-    return (
-        <GlobalContext.Provider value={state}>
-            {props.children}
-        </GlobalContext.Provider>
-    )
+    return <GlobalContext.Provider value={state}>
+        <GlobalUpdateContext.Provider value={(newState: typeof init) => { updateState(newState) }}>
+            {children}
+        </GlobalUpdateContext.Provider>
+    </GlobalContext.Provider>
 }

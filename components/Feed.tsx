@@ -1,4 +1,4 @@
-import { useGlobalContext } from "./GlobalContext2";
+import { useGlobalContext } from "./GlobalContext";
 //@ts-ignore
 import uuid from "react-uuid";
 import { clientPost, getServerSideProps } from "../pages/home";

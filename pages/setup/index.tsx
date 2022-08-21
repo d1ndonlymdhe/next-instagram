@@ -5,6 +5,8 @@ import Error from "../../components/Error";
 import Logo from "../../components/Logo";
 import Button from "../../components/Button";
 import React from "react";
+import Head from "next/head";
+import Header from "../../components/Header";
 const server = "/api/"
 export default function Setup() {
     const [username, setUserName] = useState("");
@@ -77,9 +79,14 @@ export default function Setup() {
         return <Error message="error"></Error>
     }
     if (loading) {
-        return <div>Loading</div>
+        return <div>
+            <Head>
+                <title>Instagram</title>
+            </Head>
+            Loading</div>
     }
     return (<div id="setup" className={"flex flex-col h-screen w-screen content-around"}>
+        <Header></Header>
         <main className="w-screen h-full flex flex-row justify-center items-center">
             <div
                 className={"w-[95%] min-h-[350px] items-center flex flex-row justify-center md:border-gray-200 border-solid border-2 max-w-[350px]"}>
@@ -91,7 +98,7 @@ export default function Setup() {
                     {(page === 1) && <Welcome username={username}></Welcome>}
                     {(page === 2) && <AddBio ref={bioTextAreaRef}></AddBio>}
                     {(page === 3) && <AddProfilePicture ref={fileRef}></AddProfilePicture>}
-                    {(page === 4) && ((postcomplete && <Button bonClick={handlePostComplete} text="Continue"></Button>) || (!postcomplete && <div>Loading</div>))}
+                    {(page === 4) && (!postcomplete && <div>Loading</div>)}
                     <Button text={"Continue"} bonClick={handleNextPage} className={"py-2 hover:bg-green-400"}></Button>
                 </div>
             </div>

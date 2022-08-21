@@ -1,11 +1,13 @@
 import axios from 'axios'
 import Cookies from 'js-cookie'
 import type { NextPage } from 'next'
+import Head from 'next/head';
 import { useEffect } from 'react'
+import Header from '../components/Header';
 
 export const server = "/api/";
 
-const Home: NextPage = () => {
+export default function Home() {
   useEffect(() => {
     const hash = Cookies.get("hash");
     if (hash) {
@@ -26,7 +28,15 @@ const Home: NextPage = () => {
       window.location.href = "/getstarted";
     }
   }, [])
-  return <>Loading</>
+  return <>
+    <Header></Header>
+    Loading</>
+}
+export async function getServerSideProps() {
+  return {
+    props: {
+
+    }
+  }
 }
 
-export default Home

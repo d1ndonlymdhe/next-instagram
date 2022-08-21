@@ -2,7 +2,7 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import React, { useRef, useState } from "react";
 import { server } from "../pages";
-import { useGlobalContext, useGlobalUpdateContext } from "./GlobalContext2";
+import { useGlobalContext, useGlobalUpdateContext } from "./GlobalContext";
 import Cookies from "js-cookie";
 import { ArrowLeftIcon, SearchIcon } from "@heroicons/react/outline";
 import Input from "./Input";

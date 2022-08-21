@@ -13,7 +13,7 @@ import { server } from "..";
 import Button from "../../components/Button";
 import CreatePost from "../../components/CreatePost";
 import Feed from "../../components/Feed";
-import { GlobalContextProvider, useGlobalContext, useGlobalUpdateContext } from "../../components/GlobalContext2";
+import { GlobalContextProvider, useGlobalContext, useGlobalUpdateContext } from "../../components/GlobalContext";
 import Input from "../../components/Input";
 import Logo from "../../components/Logo";
 import ModalWithBackdrop from "../../components/ModalWithBackDrop";
@@ -26,6 +26,8 @@ import { post, user } from "../../utils/type";
 import User from "../../utils/User";
 import Profile from "../../components/Profile";
 import { Wrapper } from "../../components/Wrapper";
+import Head from "next/head";
+import Header from "../../components/Header";
 const socket = io("http://localhost:4000")
 type set<T> = React.Dispatch<React.SetStateAction<T>>
 export type clientPost = {
@@ -54,7 +56,7 @@ function Home(props: AppPropsType) {
     const globalContext = useGlobalContext();
     const globalUpdateContext = useGlobalUpdateContext();
     const [isSignedIn, setIsSignedIn] = useState(false);
-    const [activeTab, setActiveTab] = useState("home");
+    const [activeTab, setActiveTab] = useState("Home");
     const [visitingProfile, setVisitingProfile] = useState(globalContext.username);
     const [val, setval] = useState(0)
     const router = useRouter();
@@ -205,9 +207,10 @@ function Home(props: AppPropsType) {
         // return <App>
         return (
             <>
+                <Header></Header>
                 <div className="h-screen w-screen flex justify-center items-center bg-slate-400">
                     {
-                        activeTab === "home" &&
+                        (activeTab === "home" || !activeTab) &&
                         <Wrapper>
                             <Topbar></Topbar>
                             <Feed></Feed>
@@ -252,7 +255,10 @@ function Home(props: AppPropsType) {
                 <Link href="/setup" id="toSetup" className="hidden"><a className="hidden">empty</a></Link>
             </>)
     } else {
-        return <>Loading</>
+        return <>
+            <Head>
+                <title>Instagram</title>
+            </Head>Loading</>
     }
 }
 
@@ -276,7 +282,7 @@ function Chat() {
     }, [socket, globalContext, globalUpdateContext])
     const initaiteChat = (username: string) => {
         console.log("initiate Chat")
-        socket.emit("createRoom", { self: globalContext.username, reciever: selectedUsername });
+        socket.emit("createRoom", { self: globalContext.username, reciever: username });
     }
     if (chatView) {
         const rooms = globalContext.rooms;
@@ -392,19 +398,7 @@ function ChatView(props: { username: string, room: room, setChatView: set<boolea
 function Topbar() {
     return <div className="w-full h-full overflow-hidden  content-center flex items-center px-3">
         <div className="w-full grid grid-cols-[7fr_2fr] content-center">
-            {/* <div className="font-billabong text-4xl">Instagram</div>
-             */}
             <Logo></Logo>
-            <div className="grid grid-cols-2 gap-2 content-center">
-                <div>
-                    <HeartIcon></HeartIcon>
-                    {/* Like */}
-                </div>
-                <div>
-                    <ChatIcon></ChatIcon>
-                    {/* Chat */}
-                </div>
-            </div>
         </div>
     </div>
 }

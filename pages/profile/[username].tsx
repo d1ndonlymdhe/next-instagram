@@ -27,9 +27,7 @@ type ProfileProps = {
 const server = "/api"
 
 export default function Profile(props: ProfileProps) {
-    if (props.error) {
-        return <div>{props.error}</div>
-    }
+
     const router = useRouter();
     const [user, setUser] = useState(JSON.parse(props.user) as user);
     const username = user.username;
@@ -100,6 +98,9 @@ export default function Profile(props: ProfileProps) {
         </div >
     </div>
 
+    if (props.error) {
+        return <div>{props.error}</div>
+    }
     return (
         <div className="h-screen w-screen flex justify-center items-center bg-slate-400">
             <div className="grid grid-rows-[6%_88%_6%] h-full w-full max-w-[500px] overflow-hidden bg-white box-border rounded-lg px-2 pt-2 font-Roboto">

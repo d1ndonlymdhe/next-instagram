@@ -7,7 +7,7 @@ import { server } from "../pages";
 import { user } from "../utils/type";
 import { FeedPost } from "./Feed";
 import Button from "./Button";
-import { useGlobalContext } from "./GlobalContext2";
+import { useGlobalContext } from "./GlobalContext";
 import ModalWithBackdrop from "./ModalWithBackDrop";
 import ProfilePicture from "./ProfilePicture";
 import ProfilePictureAndUsername from "./ProfilePictureAndUsername";

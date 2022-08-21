@@ -6,7 +6,7 @@ export default function ProfilePictureAndUsername(props: { username: string, Act
     const router = useRouter();
     const { username, onClick, ActionButton } = props;
     const clickHandler = onClick ? onClick : () => {
-        router.push(`?username=${username}#profile`, `?username=${username}#profile`, { scroll: true })
+        router.push(`?username=${username}#Profile`, `?username=${username}#Profile`, { scroll: true })
     }
     return <div onClick={() => { clickHandler() }} className="h-full w-full grid grid-cols-[1fr_8fr_1fr] items-center hover:cursor-pointer">
         <div className="w-full">
