@@ -102,9 +102,11 @@ function Home(props: AppPropsType) {
                         socket.emit("joinRooms", { roomIds: roomsToBeJoinedIds, username: self.username })
                         for (let i = 0; i < roomsToBeJoinedIds.length; i++) {
                             const messages = newState.pendingMessages.filter(message => message.roomId === roomsToBeJoinedIds[i])
-                            let members = [self.username, messages[0].from !== self.username ? messages[0].from : messages[0].to];
-                            const room: room = { messages: messages, members: members, id: roomsToBeJoinedIds[i] }
-                            newState.rooms.push(room);
+                            if (messages && messages.length > 0) {
+                                let members = [self.username, messages[0].from !== self.username ? messages[0].from : messages[0].to];
+                                const room: room = { messages: messages, members: members, id: roomsToBeJoinedIds[i] }
+                                newState.rooms.push(room);
+                            }
                         }
                     }
                     newState.ppBlobUrl = `${server}/getProfilePic?username=${self.username}`;
@@ -342,7 +344,13 @@ function Chat() {
                 }} text="Friends" className="h-fit w-fit"></Button>
             </div>
         </div>
-
+        <button onClick={() => {
+            localStorage.clear()
+            const newState = Object.assign({}, globalContext)
+            newState.rooms = []
+            newState.pendingMessages = []
+            globalUpdateContext(newState)
+        }}>Clear</button>
     </>
 }
 
