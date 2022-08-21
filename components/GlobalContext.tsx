@@ -20,7 +20,7 @@ type initType = {
     feedResults: clientPost[]
     rooms: room[],
     chatView: boolean,
-    pendingMessages?: message[]
+    pendingMessages: message[]
 }
 const init: initType = {
     username: "",
@@ -41,6 +41,7 @@ const init: initType = {
             postedOn: 0
         }
     ],
+    pendingMessages: [],
     //@ts-ignore
     rooms: [],
     chatView: false,

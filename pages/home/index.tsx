@@ -164,6 +164,19 @@ function Home(props: AppPropsType) {
         })()
     }, []);
     useEffect(() => {
+        const subscriptionCallback = (payload: { joinThese: string[] }) => {
+            const { joinThese } = payload;
+            // const newState = Object.assign({}, globalContext);
+            socket.emit("joinRooms", { roomIds: joinThese, username: globalContext.username })
+            // for (let i = 0; i < joinThese.length; i++) {
+            //     const messages = newState.pendingMessages.filter(message => message.roomId === joinThese[i])
+            //     let members = [globalContext.username, messages[0].from !== globalContext.username ? messages[0].from : messages[0].to];
+            //     const room: room = { messages: messages, members: members, id: joinThese[i] }
+            //     newState.rooms.push(room);
+            // }
+            // globalUpdateContext(newState)
+        }
+        socket.on("already subscribed", subscriptionCallback);
         const roomCreationCallback = (payload: { status: string, roomId: string, members: string[] }) => {
             console.log("room")
             const { roomId, members } = payload;
@@ -198,6 +211,7 @@ function Home(props: AppPropsType) {
         socket.on("roomDissolver", roomDissolvedCallback);
 
         return () => {
+            socket.off("already subscribed", subscriptionCallback);
             socket.off("roomCreated", roomCreationCallback);
             socket.off("newMessage", messageCallback);
             socket.off("roomDissolver", roomDissolvedCallback);
