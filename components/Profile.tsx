@@ -37,6 +37,42 @@ export default function Profile(props: { username?: string }) {
     const [username, setUsername] = useState(props.username || "");
     const [ppUrl, setPpUrl] = useState("")
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const FollowButton = (props: { isFollowing: boolean, username: string }) => {
+        const { isFollowing, username } = props;
+        const [followLoading, setFollowLoading] = useState(false);
+        return <Button key={uuid()} bonClick={(e) => {
+            if (!followLoading) {
+                setFollowLoading(true)
+                if (!isFollowing) {
+                    //try extracting logic to fucntion
+                    axios.post(`${server}/follow`, { hash: Cookies.get("hash"), toFollow: username }).then(res => {
+                        console.log("follow res = ", res);
+                        if (res.data.status === "ok") {
+                            setFollowLoading(false)
+                            const tempUserInfo = Object.assign({}, userInfo);
+                            tempUserInfo.followersCount++;
+                            tempUserInfo.followerUsers.push({ username: selfUsername });
+                            setUserInfo(tempUserInfo)
+                            setIsFollowing(true);
+                        }
+                    })
+                } else {
+                    axios.post(`${server}/unfollow`, { hash: Cookies.get("hash"), toUnFollow: username }).then(res => {
+                        if (res.data.status === "ok") {
+                            setFollowLoading(false)
+                            const tempUserInfo = Object.assign({}, userInfo);
+                            tempUserInfo.followersCount--;
+                            tempUserInfo.followerUsers = tempUserInfo.followerUsers.filter(user => {
+                                return user.username !== selfUsername;
+                            })
+                            setUserInfo(tempUserInfo)
+                            setIsFollowing(false);
+                        }
+                    })
+                }
+            }
+        }} text={`${!followLoading ? (isFollowing ? "Following" : "Follow") : "Loading"}`} className={`w-full ${!followLoading ? (isFollowing ? "bg-slate-500" : "bg-blue-400") : "bg-yellow-400"}`}></Button>
+    }
     useEffect(() => {
         // setUsername((typeof router.query.username == "string") ? router.query.username : "")
         axios.get(`${server}/userinfo`, { params: { username } }).then(async userInfoRes => {
@@ -67,21 +103,7 @@ export default function Profile(props: { username?: string }) {
             })
         }
     }, [])
-    //try rewriting to only follow handle setFollowing outside the fucntion
-    const follow = (username: string) => {
-        axios.post(`${server}/follow`, { hash: Cookies.get("hash"), toFollow: username }).then(res => {
-            if (res.data.status === "ok") {
-                setIsFollowing(true);
-            }
-        })
-    }
-    const unFollow = (username: string) => {
-        axios.post(`${server}/unfollow`, { hash: Cookies.get("hash"), toUnFollow: username }).then(res => {
-            if (res.data.status === "ok") {
-                setIsFollowing(false);
-            }
-        })
-    }
+
     const FollowingAndFollowerCount = () => {
         return <>
             <div onClick={(e) => {
@@ -114,16 +136,8 @@ export default function Profile(props: { username?: string }) {
             <FollowingAndFollowerCount></FollowingAndFollowerCount>
             <div className="flex justify-center items-center w-[200%] my-4 overflow-x-auto">{userInfo.bio}</div>
             {(username !== selfUsername) &&
-                <Button bonClick={(e) => {
-                    if (!isfollowing) {
-                        follow(username);
-                        setUserInfo({ ...userInfo, followersCount: userInfo.followersCount + 1 });
-                    } else {
-                        unFollow(username);
-                        setUserInfo({ ...userInfo, followersCount: userInfo.followersCount - 1 });
-
-                    }
-                }} text={isfollowing ? "following" : "follow"} className={`w-full ${!isfollowing && "hover:bg-blue-500"} ${isfollowing && "hover:bg-gray-400"}`}></Button>}
+                <FollowButton username={username} isFollowing={isfollowing}></FollowButton>
+            }
         </div >
     </div>
     const logoutModal = <ModalWithBackdrop onclick={() => { setShowLogoutModal(false) }} title="Confirm Logout">

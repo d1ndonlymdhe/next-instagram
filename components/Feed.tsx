@@ -25,12 +25,12 @@ export default function Feed() {
     return <div></div>
 }
 export function FeedPost(props: { post: clientPost, selfUsername?: string }) {
-    const { post } = props;
+    const [post, setPost] = useState(props.post)
     const [selfUsername, setSelfUsername] = useState(useGlobalContext().username || props.selfUsername);
     console.log(post)
     const [isLiked, setIsLiked] = useState(selfUsername ? (post.likedByUsernames.filter(user => user.username === selfUsername).length > 0) : false);
-    const [loading, setLoading] = useState(selfUsername ? true : false);
     const [showLikedBy, setShowLikedBy] = useState(false);
+    const [likeLoading, setLikeLoading] = useState(false);
     const router = useRouter();
     useEffect(() => {
         const postPictures = document.getElementsByClassName("postPicture");
@@ -42,12 +42,22 @@ export function FeedPost(props: { post: clientPost, selfUsername?: string }) {
 
     const handleLike = (postId: string) => {
         setIsLiked(!isLiked);
+        setLikeLoading(true);
         axios.post(`${server}/like`, { postId }).then((res) => {
+            setLikeLoading(false);
             if (res.data.status == "ok") {
                 if (res.data.message.liked == true) {
                     setIsLiked(true);
+                    const tempPost = Object.assign({}, post);
+                    tempPost.likedByUsernames.push({ username: selfUsername! })
+                    setPost(tempPost);
                 } else {
                     setIsLiked(false);
+                    const tempPost = Object.assign({}, post);
+                    tempPost.likedByUsernames = tempPost.likedByUsernames.filter(user => {
+                        user.username !== selfUsername;
+                    })
+                    setPost(tempPost);
                 }
             } else {
                 setIsLiked(!isLiked);
@@ -80,8 +90,8 @@ export function FeedPost(props: { post: clientPost, selfUsername?: string }) {
                         setIsLiked(!isLiked);
                         handleLike(post._id);
                     }}>
-                        {!isLiked && <HeartIcon></HeartIcon>}
-                        {isLiked && <HeartIconSolid className="text-red-600"></HeartIconSolid>}
+                        {!isLiked && <HeartIcon className={`${likeLoading && "animate-pulse"}`}></HeartIcon>}
+                        {isLiked && <HeartIconSolid className={`text-red-600 ${likeLoading && "animate-pulse"}`}></HeartIconSolid>}
                     </div>
                     <div className="underline hover:cursor-pointer ml-2" onClick={() => { setShowLikedBy(true) }}>
                         Liked By

@@ -78,6 +78,41 @@ export default function Search(props: SearchPropType) {
 
         const router = useRouter();
 
+
+        const FollowButton = (props: { result: typeof searchResults[0] }) => {
+            const { result } = props;
+            const [followLoading, setFollowLoading] = useState(false);
+            return <Button key={uuid()} bonClick={(e) => {
+                if (!followLoading) {
+                    setFollowLoading(true)
+                    if (!result.isFollowing) {
+                        //try extracting logic to fucntion
+                        console.log("toFollow = ", result.username)
+                        axios.post(`${server}/follow`, { hash: Cookies.get("hash"), toFollow: result.username }).then(res => {
+                            console.log("follow res = ", res);
+                            if (res.data.status === "ok") {
+                                const tempResults: (typeof searchResults) = Object.assign([], searchResults);
+                                tempResults[searchResults.indexOf(result)].isFollowing = true;
+                                setSearchResults(tempResults);
+                                setForReRender(!forRerender);
+                                setFollowLoading(false)
+                            }
+                        })
+                    } else {
+                        axios.post(`${server}/unfollow`, { hash: Cookies.get("hash"), toUnFollow: result.username }).then(res => {
+                            if (res.data.status === "ok") {
+                                const tempResults: (typeof searchResults) = Object.assign([], searchResults);
+                                tempResults[searchResults.indexOf(result)].isFollowing = false;
+                                setSearchResults(tempResults);
+                                setForReRender(!forRerender);
+                                setFollowLoading(false)
+                            }
+                        })
+                    }
+                }
+            }} text={`${!followLoading ? (result.isFollowing ? "Following" : "Follow") : "Loading"}`} className={`${!followLoading ? (result.isFollowing ? "bg-slate-500" : "bg-blue-400") : "bg-yellow-400"}`}></Button>
+        }
+
         //loading
         if (isSearching) {
             return <div className="h-full w-full flex items-center justify-center">
@@ -107,30 +142,7 @@ export default function Search(props: SearchPropType) {
                                     <img alt="Profile Picture" src={`${server}/getProfilePic?username=${result.username}`} height="50" width="50" className="rounded-full border border-black "></img>
                                     <div className="text-center mx-5">{result.username}</div>
                                 </div>
-                                <Button key={uuid()} bonClick={(e) => {
-                                    if (!result.isFollowing) {
-                                        //try extracting logic to fucntion
-                                        console.log("toFollow = ", result.username)
-                                        axios.post(`${server}/follow`, { hash: Cookies.get("hash"), toFollow: result.username }).then(res => {
-                                            console.log("follow res = ", res);
-                                            if (res.data.status === "ok") {
-                                                const tempResults: (typeof searchResults) = Object.assign([], searchResults);
-                                                tempResults[searchResults.indexOf(result)].isFollowing = true;
-                                                setSearchResults(tempResults);
-                                                setForReRender(!forRerender);
-                                            }
-                                        })
-                                    } else {
-                                        axios.post(`${server}/unfollow`, { hash: Cookies.get("hash"), toUnFollow: result.username }).then(res => {
-                                            if (res.data.status === "ok") {
-                                                const tempResults: (typeof searchResults) = Object.assign([], searchResults);
-                                                tempResults[searchResults.indexOf(result)].isFollowing = false;
-                                                setSearchResults(tempResults);
-                                                setForReRender(!forRerender);
-                                            }
-                                        })
-                                    }
-                                }} text={`${result.isFollowing ? "Following" : "Follow"}`} className={`${result.isFollowing ? "bg-slate-500" : "bg-blue-400"}`}></Button>
+                                <FollowButton result={result}></FollowButton>
                             </div>
                         </div>
                     }

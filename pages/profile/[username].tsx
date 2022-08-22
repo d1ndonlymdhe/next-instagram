@@ -1,8 +1,6 @@
 import { useRouter } from "next/router";
 import axios from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
-import img from "next/image";
-import mongoose from "mongoose"
 import User from "../../utils/User"
 import Post from "../../utils/Post"
 import { connect } from "../../utils/db"
@@ -17,6 +15,9 @@ import { FeedPost } from "../../components/Feed";
 import uuid from "react-uuid"
 import Button from "../../components/Button";
 import ProfilePicture from "../../components/ProfilePicture";
+import { LogoutIcon } from "@heroicons/react/outline";
+import { Wrapper } from "../../components/Wrapper";
+import Header from "../../components/Header"
 type ProfileProps = {
     error?: string;
     selfUser: string;
@@ -27,31 +28,62 @@ type ProfileProps = {
 const server = "/api"
 
 export default function Profile(props: ProfileProps) {
-
-    const router = useRouter();
-    const [user, setUser] = useState(JSON.parse(props.user) as user);
-    const username = user.username;
-    const self = JSON.parse(props.selfUser) as user;
+    const selfUser = JSON.parse(props.selfUser) as user;
+    const user = JSON.parse(props.user) as user;
     const posts = JSON.parse(props.posts) as post[];
-    const [loadingPosts, setLoadingPosts] = useState(true);
-    console.log(props.isFollowing)
-    const [isfollowing, setIsFollowing] = useState(JSON.parse(props.isFollowing) as boolean);
+    const [isfollowing, setIsFollowing] = useState<boolean>(JSON.parse(props.isFollowing));
+    const router = useRouter();
+    const username = user.username
+    const selfUsername = selfUser.username
+    const [userInfo, setUserInfo] = useState<Pick<user, "followingCount" | "followerUsers" | "followersCount" | "bio" | "posts" | "followingUsers" | "friendUsers">>({
+        followersCount: user.followersCount,
+        followingCount: user.followingCount,
+        followerUsers: user.followerUsers,
+        followingUsers: user.followingUsers,
+        bio: user.bio,
+        friendUsers: user.friendUsers,
+        //@ts-ignore
+        posts: user.posts
+    })
+    const ppUrl = `${server}/getProfilePic?username=${username}`
     const [showFollowerUsers, setShowFollowerUsers] = useState(false);
     const [showFollowingUsers, setShowFollowingUsers] = useState(false);
-    const ppUrl = `/api/getProfilePic?username=${username}`
-    const follow = (username: string) => {
-        axios.post(`${server}/follow`, { hash: Cookies.get("hash"), toFollow: username }).then(res => {
-            if (res.data.status === "ok") {
-                setIsFollowing(true);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const FollowButton = (props: { isFollowing: boolean, username: string }) => {
+        const { isFollowing, username } = props;
+        const [followLoading, setFollowLoading] = useState(false);
+        return <Button key={uuid()} bonClick={(e) => {
+            if (!followLoading) {
+                setFollowLoading(true)
+                if (!isFollowing) {
+                    //try extracting logic to fucntion
+                    axios.post(`${server}/follow`, { hash: Cookies.get("hash"), toFollow: username }).then(res => {
+                        console.log("follow res = ", res);
+                        if (res.data.status === "ok") {
+                            setFollowLoading(false)
+                            const tempUserInfo = Object.assign({}, userInfo);
+                            tempUserInfo.followersCount++;
+                            tempUserInfo.followerUsers.push({ username: selfUsername });
+                            setUserInfo(tempUserInfo)
+                            setIsFollowing(true);
+                        }
+                    })
+                } else {
+                    axios.post(`${server}/unfollow`, { hash: Cookies.get("hash"), toUnFollow: username }).then(res => {
+                        if (res.data.status === "ok") {
+                            setFollowLoading(false)
+                            const tempUserInfo = Object.assign({}, userInfo);
+                            tempUserInfo.followersCount--;
+                            tempUserInfo.followerUsers = tempUserInfo.followerUsers.filter(user => {
+                                return user.username !== selfUsername;
+                            })
+                            setUserInfo(tempUserInfo)
+                            setIsFollowing(false);
+                        }
+                    })
+                }
             }
-        })
-    }
-    const unFollow = (username: string) => {
-        axios.post(`${server}/unfollow`, { hash: Cookies.get("hash"), toUnFollow: username }).then(res => {
-            if (res.data.status === "ok") {
-                setIsFollowing(false);
-            }
-        })
+        }} text={`${!followLoading ? (isFollowing ? "Following" : "Follow") : "Loading"}`} className={`w-full ${!followLoading ? (isFollowing ? "bg-slate-500" : "bg-blue-400") : "bg-yellow-400"}`}></Button>
     }
     const FollowingAndFollowerCount = () => {
         return <>
@@ -63,7 +95,7 @@ export default function Profile(props: ProfileProps) {
                     Following
                 </span>
                 <span className="text-center">
-                    {user.followingCount}
+                    {userInfo.followingCount}
                 </span>
             </div>
             <div onClick={(e) => {
@@ -74,58 +106,114 @@ export default function Profile(props: ProfileProps) {
                     Followers
                 </span>
                 <span className="text-center">
-                    {user.followersCount}
+                    {userInfo.followersCount}
                 </span>
             </div>
         </>
     }
-
     const userInfoUI = <div className="grid grid-cols-[100px_auto]">
         <ProfilePicture src={ppUrl}></ProfilePicture>
         <div className="flex flex-wrap justify-around ml-5">
             <FollowingAndFollowerCount></FollowingAndFollowerCount>
-            <div className="flex justify-center items-center w-[200%] my-4 overflow-x-auto">{user.bio}</div>
-            {(username !== self.username) &&
-                <Button bonClick={(e) => {
-                    if (!isfollowing) {
-                        follow(username);
-                        setUser({ ...user, followersCount: user.followersCount + 1 });
-                    } else {
-                        unFollow(username);
-                        setUser({ ...user, followersCount: user.followersCount - 1 });
-                    }
-                }} text={isfollowing ? "following" : "follow"} className={`w-full ${!isfollowing && "hover:bg-blue-500"} ${isfollowing && "hover:bg-gray-400"}`}></Button>}
+            <div className="flex justify-center items-center w-[200%] my-4 overflow-x-auto">{userInfo.bio}</div>
+            {(username !== selfUsername) &&
+                <FollowButton username={username} isFollowing={isfollowing}></FollowButton>
+            }
         </div >
     </div>
-
-    if (props.error) {
-        return <div>{props.error}</div>
-    }
-    return (
-        <div className="h-screen w-screen flex justify-center items-center bg-slate-400">
-            <div className="grid grid-rows-[6%_88%_6%] h-full w-full max-w-[500px] overflow-hidden bg-white box-border rounded-lg px-2 pt-2 font-Roboto">
-                <div className="h-full w-full items-center grid grid-cols-[10fr_90fr] gap-5">
-                    <ArrowLeftIcon className="hover:cursor-pointer" onClick={() => {
-                        router.back()
-                    }}></ArrowLeftIcon>
-                    <span className="text-xl">{username}</span>
+    const logoutModal = <ModalWithBackdrop onclick={() => { setShowLogoutModal(false) }} title="Confirm Logout">
+        <div className="grid grid-cols-2">
+            <div className="flex justify-center items-center">
+                <div className="text-center">
+                    <p>Are you sure you want to logout?</p>
                 </div>
+            </div>
+            <Button bonClick={() => { localStorage.clear(); Cookies.set("hash", ""); window.location.href = "/"; }} text="Logout" className="bg-red-400" ></Button>
+        </div>
+    </ModalWithBackdrop>
+    if (props.error) {
+        return <>
+
+        </>
+    }
+    return <>
+        <Header></Header>
+        <div className="h-screen w-screen flex justify-center items-center bg-slate-400">
+            <Wrapper>
+                {
+                    showFollowerUsers &&
+                    <ModalWithBackdrop onclick={() => { setShowFollowerUsers(false) }} title="Followers">
+                        {
+                            userInfo.followerUsers.map(follower => {
+                                return <div className="m-2" key={uuid()}>
+                                    <ProfilePictureAndUsername key={uuid()} username={follower.username} onClick={() => {
+                                        router.push(`/profile/${follower.username}`)
+                                    }}></ProfilePictureAndUsername>
+                                </div>
+                            })
+                        }
+                    </ModalWithBackdrop>
+                }
+                {
+                    showFollowingUsers &&
+                    <ModalWithBackdrop onclick={() => { setShowFollowingUsers(false) }} title="Following">
+                        {
+                            userInfo.followingUsers.map(following => {
+                                return <div className="m-2" key={uuid()}>
+                                    <ProfilePictureAndUsername key={uuid()} username={following.username} onClick={() => {
+                                        router.push(`profile/${following.username}`);
+                                    }}></ProfilePictureAndUsername>
+                                </div>
+                            })
+                        }
+                    </ModalWithBackdrop>
+                }
+                {/*Topbar without logout button*/}
+                {(username !== selfUsername) &&
+                    <div className="h-full w-full items-center grid grid-cols-[10fr_90fr] gap-5">
+                        <ArrowLeftIcon className="hover:cursor-pointer" onClick={() => {
+                            router.back()
+                        }}></ArrowLeftIcon>
+                        <span className="text-xl">{username}</span>
+                    </div>
+                }
+                {/* Topbar with logout button */}
+                {
+                    (username === selfUsername) &&
+                    <>
+                        {
+                            showLogoutModal && logoutModal
+                        }
+                        <div className="h-full w-full items-center grid grid-cols-[10fr_80fr_10fr] gap-5">
+                            <ArrowLeftIcon className="hover:cursor-pointer" onClick={() => {
+                                router.back()
+                            }}></ArrowLeftIcon>
+                            <span className="text-xl">{username}</span>
+                            <LogoutIcon className="text-red-600 hover:cursor-pointer" onClick={(e) => {
+                                e.stopPropagation();
+                                setShowLogoutModal(true);
+                            }}></LogoutIcon>
+                        </div>
+                    </>
+                }
                 <div className="h-full w-full mt-5 grid grid-rows-[2fr_8fr]">
                     {userInfoUI}
-                    <div className="h-full w-full overflow-auto">
+                    <div className="h-full w-full overflow-scroll">
                         {
-                            posts.map(post => {
-                                //@ts-ignore
-                                return <FeedPost key={uuid()} post={post} selfUsername={self.username}></FeedPost>
-                            })
+                            posts.length > 0 && (
+                                posts.map(post => {
+                                    //@ts-ignore
+                                    return <FeedPost key={uuid()} post={post} selfUsername={selfUsername}></FeedPost>
+                                })
+                            ) || <div className="grid h-full w-full justify-center items-center">
+                                <span>No Posts</span>
+                            </div>
                         }
                     </div>
                 </div>
-                <div></div>
-            </div>
+            </Wrapper>
         </div>
-    )
-
+    </>
 }
 
 export async function getServerSideProps(context: { req: NextApiRequest, res: NextApiResponse, params: { username: string } }) {
