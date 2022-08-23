@@ -10,6 +10,7 @@ import { server } from "../pages";
 import ModalWithBackdrop from "./ModalWithBackDrop";
 import ProfilePictureAndUsername from "./ProfilePictureAndUsername";
 import { useRouter } from "next/router";
+import Image from "next/image"
 export default function Feed() {
     const globalContext = useGlobalContext();
     const posts = globalContext.feedResults;
@@ -39,7 +40,9 @@ export function FeedPost(props: { post: clientPost, selfUsername?: string }) {
             postPictures[i].style.height = window.getComputedStyle(postPictures[0]).width;
         }
     })
-
+    const loader = ({ src, width, quality }: any) => {
+        return src;
+    }
     const handleLike = (postId: string) => {
         setIsLiked(!isLiked);
         setLikeLoading(true);
@@ -82,7 +85,8 @@ export function FeedPost(props: { post: clientPost, selfUsername?: string }) {
                 router.push(`/profile/${post.postedByUsername[0].username}`)
             }}></ProfilePictureAndUsername>
             <div className="postPicture w-full mb-2">
-                <img src={`${server}/getPostPic?postId=${post._id}&uploaderId=${post.postedBy}`}></img>
+                {/* <img src={`${server}/getPostPic?postId=${post._id}&uploaderId=${post.postedBy}`}></img> */}
+                <Image loader={loader} src={`${server}/getPostPic?postId=${post._id}&uploaderId=${post.postedBy}`} height={1000} width={1000} alt={post.caption}></Image>
             </div>
             <div className="h-full w-full grid grid-rows-2">
                 <div className="h-full w-full grid grid-cols-[1fr_9fr] items-center">

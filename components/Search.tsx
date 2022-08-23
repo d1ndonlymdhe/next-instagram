@@ -11,6 +11,7 @@ import Spinner from "./Spinner";
 import uuid from "react-uuid"
 import Button from "./Button";
 import Error from "./Error"
+import Image from "next/image"
 type set<T> = React.Dispatch<React.SetStateAction<T>>
 type SearchPropType = {
     setVisitingProfile: set<string>
@@ -139,7 +140,7 @@ export default function Search(props: SearchPropType) {
                         }} key={uuid()}>
                             <div className="flex flex-row items-center justify-between my-3 border border-black rounded-sm py-2 px-3 hover:cursor-pointer">
                                 <div className="flex flex-row items-center justify-between">
-                                    <img alt="Profile Picture" src={`${server}/getProfilePic?username=${result.username}`} height="50" width="50" className="rounded-full border border-black "></img>
+                                    <Image alt="Profile Picture" loader={({ src }: any) => { return src }} height={100} width={100} src={`${server}/getProfilePic?username=${result.username}`}></Image>
                                     <div className="text-center mx-5">{result.username}</div>
                                 </div>
                                 <FollowButton result={result}></FollowButton>

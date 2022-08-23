@@ -14,10 +14,12 @@ import { FeedPost } from "../../components/Feed";
 //@ts-ignore
 import uuid from "react-uuid"
 import Button from "../../components/Button";
-import ProfilePicture from "../../components/ProfilePicture";
 import { LogoutIcon } from "@heroicons/react/outline";
 import { Wrapper } from "../../components/Wrapper";
 import Header from "../../components/Header"
+import Image from "next/image";
+import Link from "next/link";
+import Logo from "../../components/Logo";
 type ProfileProps = {
     error?: string;
     selfUser: string;
@@ -28,24 +30,24 @@ type ProfileProps = {
 const server = "/api"
 
 export default function Profile(props: ProfileProps) {
-    const selfUser = JSON.parse(props.selfUser) as user;
-    const user = JSON.parse(props.user) as user;
-    const posts = JSON.parse(props.posts) as post[];
-    const [isfollowing, setIsFollowing] = useState<boolean>(JSON.parse(props.isFollowing));
+    const selfUser = (JSON.parse(props.selfUser || "{}") as user);
+    const user = (JSON.parse(props.user || "{}") as user);
+    const posts = (JSON.parse(props.posts || "{}") as post[])
+    const [isfollowing, setIsFollowing] = useState<boolean>(JSON.parse(props.isFollowing || "{}"));
     const router = useRouter();
-    const username = user.username
-    const selfUsername = selfUser.username
+    const username = user.username || ""
+    const selfUsername = selfUser.username || ""
     const [userInfo, setUserInfo] = useState<Pick<user, "followingCount" | "followerUsers" | "followersCount" | "bio" | "posts" | "followingUsers" | "friendUsers">>({
-        followersCount: user.followersCount,
-        followingCount: user.followingCount,
-        followerUsers: user.followerUsers,
-        followingUsers: user.followingUsers,
-        bio: user.bio,
-        friendUsers: user.friendUsers,
+        followersCount: user.followersCount || 0,
+        followingCount: user.followingCount || 0,
+        followerUsers: user.followerUsers || undefined,
+        followingUsers: user.followingUsers || undefined,
+        bio: user.bio || undefined,
+        friendUsers: user.friendUsers || undefined,
         //@ts-ignore
-        posts: user.posts
+        posts: user.posts || undefined
     })
-    const ppUrl = `${server}/getProfilePic?username=${username}`
+    // const ppUrl = `${server}/getProfilePic?username=${username}`
     const [showFollowerUsers, setShowFollowerUsers] = useState(false);
     const [showFollowingUsers, setShowFollowingUsers] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -111,8 +113,14 @@ export default function Profile(props: ProfileProps) {
             </div>
         </>
     }
+
     const userInfoUI = <div className="grid grid-cols-[100px_auto]">
-        <ProfilePicture src={ppUrl}></ProfilePicture>
+        {/* <ProfilePicture src={ppUrl}></ProfilePicture> */}
+        <div>
+            <Image loader={({ src, quality, width }) => {
+                return src;
+            }} src={`/api/getProfilePic?username=${username}`} height={100} width={100} style={{ minHeight: "100px", maxHeight: "100px" }} className="rounded-full border border-black aspect-square" alt="Profile Picture" priority></Image>
+        </div>
         <div className="flex flex-wrap justify-around ml-5">
             <FollowingAndFollowerCount></FollowingAndFollowerCount>
             <div className="flex justify-center items-center w-[200%] my-4 overflow-x-auto">{userInfo.bio}</div>
@@ -133,11 +141,26 @@ export default function Profile(props: ProfileProps) {
     </ModalWithBackdrop>
     if (props.error) {
         return <>
-
+            <div className="h-screen w-screen flex justify-center items-center bg-slate-400">
+                <div className="grid justify-center items-center content-center h-full w-full max-w-[500px] overflow-hidden bg-white box-border rounded-lg px-2 pt-2 font-Roboto">
+                    <div className="grid grid-rows-2 gap-2">
+                        <span className="w-full text-center">
+                            {props.error}
+                        </span>
+                        <Link href="/"><a><Button text="Go Back" bonClick={() => { }}></Button></a></Link>
+                    </div>
+                </div>
+            </div>
         </>
     }
     return <>
-        <Header></Header>
+        <Header>
+            <meta name="description" content={username}></meta>
+            <meta name="robots" content="index,follow"></meta>
+            <meta property="og:title" content={username}></meta>
+            <meta property="og:site_name" content="Madhe Ko Instagram"></meta>
+            <meta property="og:image" content={`/api/getProfilePic?username=${username}`}></meta>
+        </Header>
         <div className="h-screen w-screen flex justify-center items-center bg-slate-400">
             <Wrapper>
                 {
@@ -147,7 +170,7 @@ export default function Profile(props: ProfileProps) {
                             userInfo.followerUsers.map(follower => {
                                 return <div className="m-2" key={uuid()}>
                                     <ProfilePictureAndUsername key={uuid()} username={follower.username} onClick={() => {
-                                        router.push(`/profile/${follower.username}`)
+                                        router.push(`${follower.username}`)
                                     }}></ProfilePictureAndUsername>
                                 </div>
                             })
@@ -161,7 +184,7 @@ export default function Profile(props: ProfileProps) {
                             userInfo.followingUsers.map(following => {
                                 return <div className="m-2" key={uuid()}>
                                     <ProfilePictureAndUsername key={uuid()} username={following.username} onClick={() => {
-                                        router.push(`profile/${following.username}`);
+                                        router.push(`${following.username}`);
                                     }}></ProfilePictureAndUsername>
                                 </div>
                             })
@@ -174,7 +197,8 @@ export default function Profile(props: ProfileProps) {
                         <ArrowLeftIcon className="hover:cursor-pointer" onClick={() => {
                             router.back()
                         }}></ArrowLeftIcon>
-                        <span className="text-xl">{username}</span>
+                        {/* <span className="text-xl">{username}</span> */}
+                        <Logo></Logo>
                     </div>
                 }
                 {/* Topbar with logout button */}
@@ -219,6 +243,7 @@ export default function Profile(props: ProfileProps) {
 export async function getServerSideProps(context: { req: NextApiRequest, res: NextApiResponse, params: { username: string } }) {
     const { username } = context.params;
     const hash = context.req.cookies.hash!;
+    console.log(hash)
     if (hash) {
         if (username) {
             const connection = await connect()

@@ -28,6 +28,7 @@ import Profile from "../../components/Profile";
 import { Wrapper } from "../../components/Wrapper";
 import Head from "next/head";
 import Header from "../../components/Header";
+import Spinner from "../../components/Spinner";
 const socket = io("http://localhost:4000")
 type set<T> = React.Dispatch<React.SetStateAction<T>>
 export type clientPost = {
@@ -58,7 +59,6 @@ function Home(props: AppPropsType) {
     const [isSignedIn, setIsSignedIn] = useState(false);
     const [activeTab, setActiveTab] = useState("Home");
     const [visitingProfile, setVisitingProfile] = useState(globalContext.username);
-    const [val, setval] = useState(0)
     const router = useRouter();
     useEffect(() => {
         const tabHash = getLastHash(window.location.toString());
@@ -215,7 +215,14 @@ function Home(props: AppPropsType) {
         // return <App>
         return (
             <>
-                <Header></Header>
+                <Header>
+                    <link rel="preconnect" href="localhost:4000"></link>
+                    <meta name="description" content="Madhe Ko Instagram an simple instagram clone built with nextjs"></meta>
+                    <meta name="robots" content="index,follow"></meta>
+                    <meta property="og:title" content="Madhe Ko Instagram"></meta>
+                    <meta property="og:site_name" content="Madhe Ko Instagram"></meta>
+                    <meta property="og:image" content={`/favicon.ico`}></meta>
+                </Header>
                 <div className="h-screen w-screen flex justify-center items-center bg-slate-400">
                     {
                         (activeTab === "home" || !activeTab) &&
@@ -264,9 +271,20 @@ function Home(props: AppPropsType) {
             </>)
     } else {
         return <>
-            <Head>
-                <title>Instagram</title>
-            </Head>Loading</>
+            <Header>
+                <link rel="preconnect" href="localhost:4000"></link>
+                <meta name="description" content="Madhe Ko Instagram an simple instagram clone built with nextjs"></meta>
+                <meta name="robots" content="index,follow"></meta>
+                <meta property="og:title" content="Madhe Ko Instagram"></meta>
+                <meta property="og:site_name" content="Madhe Ko Instagram"></meta>
+                <meta property="og:image" content={`/favicon.ico`}></meta>
+            </Header>
+            <div className="h-screen w-screen flex justify-center items-center bg-slate-400">
+                <div className="grid items-center justify-center content-center h-full w-full max-w-[500px] overflow-hidden bg-white box-border rounded-lg px-2 pt-2 font-Roboto">
+                    <Spinner></Spinner>
+                </div>
+            </div>
+        </>
     }
 }
 
@@ -336,13 +354,6 @@ function Chat() {
                 }} text="Friends" className="h-fit w-fit"></Button>
             </div>
         </div>
-        <button onClick={() => {
-            localStorage.clear()
-            const newState = Object.assign({}, globalContext)
-            newState.rooms = []
-            newState.pendingMessages = []
-            globalUpdateContext(newState)
-        }}>Clear</button>
     </>
 }
 

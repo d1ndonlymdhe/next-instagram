@@ -9,8 +9,8 @@ import { FeedPost } from "./Feed";
 import Button from "./Button";
 import { useGlobalContext } from "./GlobalContext";
 import ModalWithBackdrop from "./ModalWithBackDrop";
-import ProfilePicture from "./ProfilePicture";
 import ProfilePictureAndUsername from "./ProfilePictureAndUsername";
+import Image from "next/image"
 //@ts-ignore
 import uuid from "react-uuid"
 //to load profile route to /home?username=username#profile
@@ -131,7 +131,11 @@ export default function Profile(props: { username?: string }) {
         </>
     }
     const userInfoUI = <div className="grid grid-cols-[100px_auto]">
-        <ProfilePicture src={ppUrl}></ProfilePicture>
+        <div>
+            <Image loader={({ src, quality, width }) => {
+                return src;
+            }} src={`/api/getProfilePic?username=${username}`} height={100} width={100} style={{ minHeight: "100px", maxHeight: "100px" }} className="rounded-full border border-black aspect-square" alt="Profile Picture" priority></Image>
+        </div>
         <div className="flex flex-wrap justify-around ml-5">
             <FollowingAndFollowerCount></FollowingAndFollowerCount>
             <div className="flex justify-center items-center w-[200%] my-4 overflow-x-auto">{userInfo.bio}</div>
