@@ -13,6 +13,7 @@ import ProfilePictureAndUsername from "./ProfilePictureAndUsername";
 import Image from "next/image"
 //@ts-ignore
 import uuid from "react-uuid"
+
 //to load profile route to /home?username=username#profile
 export default function Profile(props: { username?: string }) {
     console.log("rerender")

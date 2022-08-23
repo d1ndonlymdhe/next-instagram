@@ -29,7 +29,8 @@ import { Wrapper } from "../../components/Wrapper";
 import Head from "next/head";
 import Header from "../../components/Header";
 import Spinner from "../../components/Spinner";
-const socket = io("http://localhost:4000")
+const chatServer = "http://localhost:4000"
+const socket = io(chatServer)
 type set<T> = React.Dispatch<React.SetStateAction<T>>
 export type clientPost = {
     caption: string;
@@ -216,7 +217,7 @@ function Home(props: AppPropsType) {
         return (
             <>
                 <Header>
-                    <link rel="preconnect" href="localhost:4000"></link>
+                    <link rel="preconnect" href={chatServer}></link>
                     <meta name="description" content="Madhe Ko Instagram an simple instagram clone built with nextjs"></meta>
                     <meta name="robots" content="index,follow"></meta>
                     <meta property="og:title" content="Madhe Ko Instagram"></meta>
