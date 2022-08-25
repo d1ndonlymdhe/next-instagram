@@ -254,7 +254,7 @@ export async function getServerSideProps(context: { req: NextApiRequest, res: Ne
             if (reqUser) {
                 const following = reqUser.followingUsers;
                 const followers = reqUser.followerUsers;
-                const isFollowing = following.some(user => user.username === loggedInUser.username);
+                const isFollowing = followers.some(user => user.username === loggedInUser.username);
                 const posts: post[] = await Post.aggregate([
                     {
                         $redact: {
