@@ -1,6 +1,7 @@
 export interface user {
     username: string;
     password?: string;
+    salt: string;
     followingCount: number;
     followingUsers: { username: string }[];
     followersCount: number;

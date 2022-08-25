@@ -8,6 +8,7 @@ import { ChangeEventHandler } from "react";
 import Logo from "../../components/Logo";
 import { useRouter } from "next/router";
 import Head from "next/head";
+import { NextApiRequest } from "next";
 const server = "/api/"
 function Index() {
     const buttonColorBlocked = 'bg-[#afdcf9]';
@@ -102,11 +103,9 @@ function Index() {
     )
 }
 
-export async function getServerSideProps() {
+export async function getServerSideProps(context: { req: NextApiRequest }) {
     return {
-        props: {
-
-        }
+        props: {}
     }
 }
 

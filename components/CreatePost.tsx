@@ -54,7 +54,9 @@ export default function CreatePost() {
                             if (files) {
                                 const file = files[0];
                                 const reader = new FileReader();
+                                console.log(reader)
                                 reader.onload = (e) => {
+                                    console.log("reader loaded")
                                     const img = document.createElement("img");
                                     img.onload = (e) => {
                                         const canvas = document.getElementById("canvas") as HTMLCanvasElement;

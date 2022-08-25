@@ -26,7 +26,6 @@ import { post, user } from "../../utils/type";
 import User from "../../utils/User";
 import Profile from "../../components/Profile";
 import { Wrapper } from "../../components/Wrapper";
-import Head from "next/head";
 import Header from "../../components/Header";
 import Spinner from "../../components/Spinner";
 const chatServer = "http://localhost:4000"
@@ -44,17 +43,17 @@ export type clientPost = {
     profilePictureUrl: string;
     _id: string;
 }
-type AppPropsType = { posts: string, selfUser: string, messages: string };
+type AppPropsType = { posts: string, selfUser: string, messages: string, error?: string };
 
 export default function App(props: AppPropsType) {
     //@ts-ignore
     return <GlobalContextProvider>
-        <Home posts={props.posts} selfUser={props.selfUser} messages={props.messages} />
+        <Home posts={props.posts} selfUser={props.selfUser} messages={props.messages} error={props.error} />
     </GlobalContextProvider>
 }
 
 function Home(props: AppPropsType) {
-    const { posts, selfUser, messages } = props;
+    const { posts, selfUser, messages, error } = props;
     const globalContext = useGlobalContext();
     const globalUpdateContext = useGlobalUpdateContext();
     const [isSignedIn, setIsSignedIn] = useState(false);
@@ -75,10 +74,7 @@ function Home(props: AppPropsType) {
     //get userinfo and feed
     useEffect(() => {
         (async () => {
-            const hash = Cookies.get("hash");
-            if (hash === undefined) {
-                window.location.href = "/"
-            }
+            const hash = Cookies.get("hash")!;
             //if value recieved from serversideprops
             if (selfUser) {
                 const self: user = JSON.parse(selfUser);
@@ -132,38 +128,6 @@ function Home(props: AppPropsType) {
                     setIsSignedIn(true)
                 }
             }
-            //if not passed from serverside props
-            else {
-                axios.post(`${server}/userinfo`, { hash: hash }).then(async (res) => {
-                    if (res.data.status === "ok") {
-                        if (res.data.message.firstLogin) {
-                            window.location.href = "/setup";
-                        } else {
-                            const newState = { ...globalContext, username: res.data.message.username };
-                            newState.ppBlobUrl = `${server}/getProfilePic?username=${res.data.message.username}`;
-                            if (posts) {
-                                newState.feedResults = JSON.parse(posts);
-                            } else {
-                                const res = await axios.get(`${server}/feed`, { params: { hash } })
-                                if (res.data.status !== "error") {
-                                    newState.feedResults = res.data.posts;
-                                } else {
-                                    newState.feedResults = [];
-                                }
-                            }
-                            newState.feedResults = newState.feedResults.map((post) => {
-                                post.profilePictureUrl = `${server}/getProfilePic?username=${post.postedByUsername}`;
-                                post.imageUrl = `${server}/getPostPic?postId=${post._id}&uploaderId=${post.postedBy}`;
-                                return post;
-                            })
-                            globalUpdateContext(newState);
-                            setIsSignedIn(true);
-                        }
-                    } else {
-                        window.location.href = "/getstarted";
-                    }
-                })
-            }
         })()
     }, []);
     useEffect(() => {
@@ -212,6 +176,20 @@ function Home(props: AppPropsType) {
             socket.off("roomDissolver", roomDissolvedCallback);
         }
     }, [socket, globalContext, globalUpdateContext])
+    if (props.error) {
+        return <>
+            <div className="h-screen w-screen flex justify-center items-center bg-slate-400">
+                <div className="grid justify-center items-center content-center h-full w-full max-w-[500px] overflow-hidden bg-white box-border rounded-lg px-2 pt-2 font-Roboto">
+                    <div className="grid grid-rows-2 gap-2">
+                        <span className="w-full text-center">
+                            {props.error}
+                        </span>
+                        <Link href="/"><a><Button text="Go Back" bonClick={() => { }}></Button></a></Link>
+                    </div>
+                </div>
+            </div>
+        </>
+    }
     if (isSignedIn) {
         // return <App>
         return (
@@ -530,6 +508,14 @@ export async function getServerSideProps(context: { req: NextApiRequest }) {
                 console.log("messages = ", messages);
             }
             reqUser.save();
+            if (reqUser.firstLogin) {
+                return {
+                    redirect: {
+                        permanent: false,
+                        destination: "/setup"
+                    }
+                }
+            }
             if (following.length > 0) {
                 let posts: post[] = await Post.aggregate([
                     {
@@ -592,7 +578,17 @@ export async function getServerSideProps(context: { req: NextApiRequest }) {
             }
         } else {
             return {
-                props: { posts: "[]", selfUser: "{}", messages: "[]" }
+                redirect: {
+                    permanent: false,
+                    destination: "/getstarted"
+                }
+            }
+        }
+    } else {
+        return {
+            redirect: {
+                permanent: false,
+                destination: "/getstarted"
             }
         }
     }

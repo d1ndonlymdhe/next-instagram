@@ -18,9 +18,9 @@ export default function login(req: NextApiRequest, res: NextApiResponse) {
                     text: "Incorrect Username"
                 }
             } else {
-                if (user.password === password) {
+                if (user.password === sum(password + user.salt)) {
                     status = "ok";
-                    const uniqueHash = sum(user._id);
+                    const uniqueHash = sum(user._id + (Math.random()) + (new Date().getTime()));
                     message = {
                         text: "ok",
                         hash: uniqueHash,

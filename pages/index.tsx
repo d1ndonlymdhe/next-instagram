@@ -1,41 +1,69 @@
 import axios from 'axios'
 import Cookies from 'js-cookie'
-import type { NextPage } from 'next'
-import Head from 'next/head';
+import { NextApiRequest } from 'next';
 import { useEffect } from 'react'
 import Header from '../components/Header';
+import Spinner from '../components/Spinner';
+import { connect } from '../utils/db';
+import { user } from '../utils/type';
+import User from '../utils/User';
 
 export const server = "/api/";
 
 export default function Home() {
-  useEffect(() => {
-    const hash = Cookies.get("hash");
-    if (hash) {
-      Cookies.set("hash", hash, { expires: 30 });
-      axios.post(`${server}/userinfo`, { hash: hash }).then(res => {
-        if (res.data.status === "ok") {
-          if (res.data.message.firstLogin) {
-            window.location.href = "/setup";
-          } else {
-            window.location.href = "/home";
-          }
-        } else {
-          window.location.href = "/getstarted";
-
-        }
-      })
-    } else {
-      window.location.href = "/getstarted";
-    }
-  }, [])
   return <>
-    <Header></Header>
-    Loading</>
+    <Header>
+      <link rel="preconnect" href="localhost:4000"></link>
+      <meta name="description" content="Madhe Ko Instagram an simple instagram clone built with nextjs"></meta>
+      <meta name="robots" content="index,follow"></meta>
+      <meta property="og:title" content="Madhe Ko Instagram"></meta>
+      <meta property="og:site_name" content="Madhe Ko Instagram"></meta>
+      <meta property="og:image" content={`/favicon.ico`}></meta>
+    </Header>
+    <div className="h-screen w-screen flex justify-center items-center bg-slate-400">
+      <div className="grid items-center justify-center content-center h-full w-full max-w-[500px] overflow-hidden bg-white box-border rounded-lg px-2 pt-2 font-Roboto">
+        <Spinner></Spinner>
+      </div>
+    </div>
+  </>
 }
-export async function getServerSideProps() {
+export async function getServerSideProps(context: { req: NextApiRequest }) {
+  const hash = context.req.cookies.hash;
+  if (hash) {
+    const connection = await connect();
+    const reqUser = await User.findOne({ hash: hash }) as user;
+    if (reqUser) {
+      if (reqUser.firstLogin) {
+        console.log("first login")
+        return {
+          redirect: {
+            permanent: false,
+            destination: "/setup"
+          }
+        }
+      } else {
+        console.log("not first login")
+        return {
+          redirect: {
+            permanent: false,
+            destination: "/home"
+          }
+        }
+      }
+    }
+  } else {
+    console.log("no hash")
+    return {
+      redirect: {
+        permanent: false,
+        destination: "/getstarted"
+      }
+    }
+  }
   return {
-    props: {
-
+    redirect: {
+      permanent: false,
+      destination: "/getstarted"
     }
   }
 }
