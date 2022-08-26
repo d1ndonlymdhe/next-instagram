@@ -7,6 +7,10 @@ import Success from "../../components/Success";
 import Logo from "../../components/Logo";
 import { useRouter } from "next/router";
 import Head from "next/head";
+import { GetServerSidePropsContext } from "next";
+import { connect } from "../../utils/db";
+import { user } from "../../utils/type";
+import User from "../../utils/User";
 const server = "/api/"
 
 
@@ -106,7 +110,29 @@ export default function SignUpPage() {
     )
 }
 
-export async function getServerSideProps() {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+    const hash = context.req.cookies.hash;
+    if (hash) {
+        const connection = await connect()
+        const user = await User.findOne({ hash }, "username") as user;
+        if (user) {
+            if (user.firstLogin) {
+                return {
+                    redirect: {
+                        permanent: false,
+                        destination: "/setup"
+                    }
+                }
+            } else {
+                return {
+                    redirect: {
+                        permanent: false,
+                        destination: "/home"
+                    }
+                }
+            }
+        }
+    }
     return {
         props: {
 
