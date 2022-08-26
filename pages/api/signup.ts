@@ -7,7 +7,7 @@ import { user } from "../../utils/type"
 import sum from "hash-sum"
 export default function signup(req: NextApiRequest, res: NextApiResponse) {
     console.log("ok");
-    const { username, password } = <signUpReq>req.body;
+    const { username, password } = <signUpReq>req.query;
     let status = "error";
     let message: messageType = {
         text: "Unknown error occured"

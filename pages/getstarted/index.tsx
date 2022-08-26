@@ -19,6 +19,7 @@ function Index() {
     const [isLoginButtonActive, setIsLoginButtonActive] = useState(false);
     const [loginError, setLoginError] = useState("");
     const [loginSuccess, setLoginSuccess] = useState(false);
+    const [loginLoading, setLoginLoading] = useState(false)
     const [hash, setHash] = useState("");
     const router = useRouter()
     useEffect(() => {
@@ -42,16 +43,21 @@ function Index() {
             const password = passwordRef.current?.value;
             if (username !== undefined && password !== undefined) {
                 console.log("ok");
-                axios.post(`${server}/login`, { username: username, password: password }).then(res => {
-                    if (res.data.status === "error") {
-                        setLoginError(res.data.message.text);
-                    } else {
-                        setLoginError("");
-                        setLoginSuccess(true);
-                        console.log(loginSuccess)
-                        setHash(res.data.message.hash);
-                    }
-                });
+                if (!loginLoading) {
+                    setLoginLoading(true)
+                    axios.get(`${server}/login?username=${username}&password=${password}`).then(res => {
+                        console.log(res.data)
+                        setLoginLoading(false)
+                        if (res.data.status === "error") {
+                            setLoginError(res.data.message.text);
+                        } else {
+                            setLoginError("");
+                            setLoginSuccess(true);
+                            console.log(loginSuccess)
+                            setHash(res.data.message.hash);
+                        }
+                    })
+                }
             } else {
                 setLoginError("Enter a username and password");
             }
@@ -66,7 +72,6 @@ function Index() {
                 <title>Instagram</title>
             </Head>
             <div className='w-screen h-screen flex flex-row justify-center items-center'>
-
                 <div className='w-[95%] h-fit flex flex-row justify-center items-center md:border-gray-200 border-solid border-2 max-w-[350px]'>
                     <div className="my-5 flex flex-col justify-center items-center content-center w-full max-w-[300px]">
                         {/* <div className='font-billabong text-5xl mb-10'>Instagram</div>
@@ -82,7 +87,8 @@ function Index() {
                                 <div id="loginFormWrapper" className='flex flex-col justify-around items-center content-center w-full'>
                                     <Input name="username" ref={usernameRef} autoFocus={true} placeholder="Username" type="text" className='w-full h-8 mb-2 pl-2' onChange={setLoginButtonColorOnChange}></Input>
                                     <Input name="password" ref={passwordRef} placeholder="Password" type="password" className='w-full h-8 pl-2' onChange={setLoginButtonColorOnChange}></Input>
-                                    <Button type="submit" text='Log in' className={`${loginButtonColor} w-full my-2 py-1`} bonClick={handleLogin}></Button>
+                                    {/* <Button type="submit" name={"submit"} text='Log in' className={`${loginButtonColor} w-full my-2 py-1`} bonClick={() => { }}></Button> */}
+                                    <Button type="submit" name="submit" text={`${loginLoading && "Loading" || "Log In"}`} bonClick={() => { }} className={`${loginLoading && "bg-yellow-400" || loginButtonColor} w-full my-2 py-1`}></Button>
                                 </div>
                             </form>
                         </div>
@@ -103,11 +109,11 @@ function Index() {
     )
 }
 
-export async function getServerSideProps(context: { req: NextApiRequest }) {
-    return {
-        props: {}
-    }
-}
+// export async function getServerSideProps(context: { req: NextApiRequest }) {
+//     return {
+//         props: {}
+//     }
+// }
 
 
 export default Index;

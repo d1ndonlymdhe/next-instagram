@@ -1,4 +1,4 @@
-import { ChangeEventHandler, useRef, useState } from "react"
+import { ChangeEventHandler, useEffect, useRef, useState } from "react"
 import axios from "axios";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
@@ -20,7 +20,14 @@ export default function SignUpPage() {
     const [isSignUpButtonActive, setIsSignUpButtonActive] = useState(false);
     const [signUpError, setSignUpError] = useState("");
     const [signUpSuccess, setSignUpSuccess] = useState("");
-
+    const [signupLoading, setSignUpLoading] = useState(false)
+    useEffect(() => {
+        usernameRef.current?.focus()
+        if (usernameRef.current?.value.length && passwordRef.current?.value.length) {
+            setIsSignUpButtonActive(true);
+            setSignUpButtonColor(buttonColorAvialable);
+        }
+    }, [])
     const setSignUpButtonColorOnChange = (e: ChangeEventHandler) => {
         if (usernameRef.current?.value && usernameRef.current.value.length > 0 && passwordRef.current?.value && passwordRef.current.value.length >= 8) {
             setSignUpButtonColor(buttonColorAvialable);
@@ -35,21 +42,24 @@ export default function SignUpPage() {
         // window.location.href = "/getstarted"
     }
     const handleSignup = (e: React.MouseEvent<HTMLButtonElement>) => {
-        console.log("ok")
-        if (isSignUpButtonActive) {
-            const username = usernameRef.current?.value;
-            const password = passwordRef.current?.value;
-            axios.post(`${server}/signup`, { username: username, password: password }).then(res => {
-                if (res.data.status === "ok") {
-                    setSignUpError("");
-                    setSignUpSuccess("GO TO LOGIN PAGE");
-                } else {
-                    setSignUpError(res.data.message.text)
-                }
-            })
-        } else {
-            setSignUpSuccess("");
-            setSignUpError("Username and Password must be minimum 8 characters")
+        if (!signupLoading) {
+            setSignUpLoading(true)
+            if (isSignUpButtonActive) {
+                const username = usernameRef.current?.value;
+                const password = passwordRef.current?.value;
+                axios.get(`${server}/signup`, { params: { username: username, password: password } }).then(res => {
+                    setSignUpLoading(false)
+                    if (res.data.status === "ok") {
+                        setSignUpError("");
+                        setSignUpSuccess("GO TO LOGIN PAGE");
+                    } else {
+                        setSignUpError(res.data.message.text)
+                    }
+                })
+            } else {
+                setSignUpSuccess("");
+                setSignUpError("Username and Password must be minimum 8 characters")
+            }
         }
 
     }
@@ -75,7 +85,7 @@ export default function SignUpPage() {
                                 <div id="loginFormWrapper" className='flex flex-col justify-around items-center content-center w-full'>
                                     <Input name="username" ref={usernameRef} autoFocus={true} placeholder="Username" type="text" className='w-full h-8 mb-2 pl-2' onChange={setSignUpButtonColorOnChange}></Input>
                                     <Input name="password" ref={passwordRef} placeholder="Password" type="password" className='w-full h-8 pl-2' onChange={setSignUpButtonColorOnChange}></Input>
-                                    <Button text="Sign Up" bonClick={(e) => { }} className={`my-2 bg-neutral border-[1px] rounded-md border-black py-2 ${signUpButtonColor}`}></Button>
+                                    <Button text={`${signupLoading && "Loading" || "Sign Up"}`} type="submit" bonClick={(e) => { }} className={`my-2 bg-neutral border-[1px] rounded-md border-black py-2 ${signupLoading && "bg-yellow-400" || signUpButtonColor}`}></Button>
                                 </div>
                             </form>
                         </div>
