@@ -2,7 +2,7 @@ import { ArrowLeftIcon, LogoutIcon } from "@heroicons/react/outline";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { useRouter } from "next/router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useReducer } from "react";
 import { server } from "../pages";
 import { user } from "../utils/type";
 import { FeedPost } from "./Feed";
@@ -13,6 +13,19 @@ import ProfilePictureAndUsername from "./ProfilePictureAndUsername";
 import Image from "next/image"
 //@ts-ignore
 import uuid from "react-uuid"
+import { clientPost } from "../pages/home";
+import Toast from "./Toast";
+type clientUser = {
+    followersCount: number,
+    followingCount: number,
+    followerUsers: { username: string }[],
+    followingUsers: { username: string }[],
+    bio: string
+    friendUsers: { username: string }[],
+    posts: clientPost[]
+
+}
+
 
 //to load profile route to /home?username=username#profile
 export default function Profile(props: { username?: string }) {
@@ -21,16 +34,21 @@ export default function Profile(props: { username?: string }) {
     const selfUsername = globalState.username;
     const router = useRouter();
     const { ppBlobUrl } = globalState;
-    const [userInfo, setUserInfo] = useState<Pick<user, "followingCount" | "followerUsers" | "followersCount" | "bio" | "posts" | "followingUsers" | "friendUsers">>({
+    const [userInfo, setUserInfo] = useState<clientUser>({
         followersCount: 0,
         followingCount: 0,
         followerUsers: [{ username: "" }],
         followingUsers: [{ username: "" }],
         bio: "",
         friendUsers: [{ username: "" }],
-        //@ts-ignore
-        posts: [{}]
+        posts: []
     })
+    const [posts, setPosts] = useReducer((posts: clientPost[], newPosts: clientPost[]) => {
+        const tempUserInfo = Object.assign({}, userInfo);
+        tempUserInfo.posts = newPosts;
+        setUserInfo(tempUserInfo)
+        return newPosts
+    }, userInfo.posts)
     const [loadingPosts, setLoadingPosts] = useState(true);
     const [isfollowing, setIsFollowing] = useState(false);
     const [showFollowerUsers, setShowFollowerUsers] = useState(false);
@@ -38,6 +56,17 @@ export default function Profile(props: { username?: string }) {
     const [username, setUsername] = useState(props.username || "");
     const [ppUrl, setPpUrl] = useState("")
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [toastMsg, setToastMsg] = useState("");
+    useEffect(() => {
+
+        if (toastMsg) {
+            alert(toastMsg)
+            setToastMsg("")
+            return () => {
+                setToastMsg("")
+            }
+        }
+    }, [toastMsg])
     const FollowButton = (props: { isFollowing: boolean, username: string }) => {
         const { isFollowing, username } = props;
         const [followLoading, setFollowLoading] = useState(false);
@@ -81,8 +110,9 @@ export default function Profile(props: { username?: string }) {
                 axios.get(`${server}/getPostsFromUser`, { params: { username } }).then(res => {
                     if (res.data.status == "ok") {
                         const { followersCount, followingCount, followerUsers, followingUsers, bio, friendUsers } = userInfoRes.data.message
-                        const posts = res.data.posts
+                        const posts: clientPost[] = res.data.posts
                         setUserInfo({ followersCount, followingCount, followerUsers, followingUsers, posts, bio, friendUsers })
+                        setPosts(posts)
                         setLoadingPosts(false);
                     }
                 })
@@ -218,9 +248,8 @@ export default function Profile(props: { username?: string }) {
                 {loadingPosts && "loading"}
                 {!loadingPosts && (
                     userInfo.posts && (
-                        userInfo.posts.map(post => {
-                            //@ts-ignore
-                            return <FeedPost key={uuid()} post={post}></FeedPost>
+                        posts.map(post => {
+                            return <FeedPost key={uuid()} post={post} posts={posts} setPosts={setPosts} setToast={setToastMsg}></FeedPost>
                         })
                     )
                 )}

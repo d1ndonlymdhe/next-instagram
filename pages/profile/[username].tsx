@@ -32,7 +32,7 @@ const server = "/api"
 export default function Profile(props: ProfileProps) {
     const selfUser = (JSON.parse(props.selfUser || "{}") as user);
     const user = (JSON.parse(props.user || "{}") as user);
-    const posts = (JSON.parse(props.posts || "{}") as post[])
+    const [posts, setPosts] = useState((JSON.parse(props.posts || "{}") as post[]))
     const [isfollowing, setIsFollowing] = useState<boolean>(JSON.parse(props.isFollowing || "{}"));
     const router = useRouter();
     const username = user.username || ""

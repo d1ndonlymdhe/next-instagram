@@ -25,15 +25,15 @@ export default async function like(req: NextApiRequest, res: NextApiResponse) {
                         res.status(200).json({ status: "ok", message: { liked: true } });
                     }
                 } else {
-                    res.status(400).json({ status: "error", message: "Post not found" });
+                    res.status(200).json({ status: "error", message: "Post not found" });
                 }
             } else {
-                res.status(400).json({ status: "error", message: "User not found" });
+                res.status(200).json({ status: "error", message: "User not found" });
             }
         } else {
-            res.status(400).json({ status: "error", message: "Post not found" });
+            res.status(200).json({ status: "error", message: "Post not found" });
         }
     } else {
-        res.status(400).json({ status: "error", message: "User not found" });
+        res.status(200).json({ status: "error", message: "User not found" });
     }
 }

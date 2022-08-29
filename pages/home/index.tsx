@@ -28,6 +28,7 @@ import Profile from "../../components/Profile";
 import { Wrapper } from "../../components/Wrapper";
 import Header from "../../components/Header";
 import Spinner from "../../components/Spinner";
+
 const chatServer = "http://localhost:4000"
 const socket = io(chatServer)
 type set<T> = React.Dispatch<React.SetStateAction<T>>
@@ -274,7 +275,6 @@ function Chat() {
     const [selectedUsername, setSelectedUsername] = useState("");
     const [chatView, setChatView] = useState(false);
     const globalUpdateContext = useGlobalUpdateContext();
-
     const router = useRouter();
     useEffect(() => {
         const roomCreationErrorCallback = (payload: { message: string }) => {
@@ -376,6 +376,7 @@ function ChatView(props: { username: string, room: room, setChatView: set<boolea
                 <div className="flex flex-col overflow-y-auto h-fit w-full">
                     {
                         messages.map(message => {
+                            //@ts-ignore
                             return <div className={`my-2 flex w-full ${message.from === username ? "flex-row" : "flex-row-reverse"}`} key={uuid()}>
                                 <div className={`w-fit py-1 px-2 max-w-[50%] rounded-xl ${message.from === username ? "bg-gray-400" : "bg-blue-400"} break-words`}>{message.content}</div>
                             </div>
@@ -427,9 +428,9 @@ function ReturnIconForFooter(activeTab: string, tabName: string, outline: any, s
     const router = useRouter();
     {
         if (tabName === "profile") {
-            outline = React.createElement(outline, { className: "hover:cursor-pointer", onClick: () => { router.push(`?username=${username}#${tabName}`) } });
+            outline = React.createElement(outline, { className: "hover:cursor-pointer", onClick: () => { router.push(`?username=${username}#${tabName}`, undefined, { scroll: false }) } });
         } else {
-            outline = React.createElement(outline, { className: "hover:cursor-pointer", onClick: () => { router.push(`#${tabName}`) } });
+            outline = React.createElement(outline, { className: "hover:cursor-pointer", onClick: () => { router.push(`#${tabName}`, undefined, { scroll: false }) } });
         }
         solid = React.createElement(solid, { className: "hover:cursor-pointer", onClick: () => { } });
     }
