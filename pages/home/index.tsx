@@ -317,7 +317,7 @@ function Chat() {
             }
             <div id="chats" className="flex align-top flex-col">
                 {
-                    globalContext.rooms.map(room => {
+                    removeDuplicate(globalContext.rooms).map(room => {
                         const friendUsername = room.members.filter(member => { return member !== globalContext.username })[0];
                         console.log(globalContext)
                         console.log("friendUsername = ", room.members.filter(member => { member !== globalContext.username }));
@@ -364,16 +364,24 @@ function ChatView(props: { username: string, room: room, setChatView: set<boolea
     useEffect(() => {
         axios.post("api/removePendingMessagesFromRoom", { roomId: room.id })
     }, []);
+    useEffect(() => {
+        console.log("scrolling")
+        const messages = document.getElementById("messageContainer");
+        const lastMessage = messages?.children[messages.children.length - 1];
+        if (lastMessage) {
+            lastMessage?.scrollIntoView()
+        }
+    }, [messages.length])
     return <>
-        <div className="grid grid-cols-[5fr_95fr] justify-center items-center w-full gap-5">
+        <div className="grid grid-cols-[5fr_95fr] justify-center  items-center w-full gap-5">
             <ArrowLeftIcon onClick={() => { setChatView(false); setSelectedUsername("") }}></ArrowLeftIcon>
             <div className="text-center text-xl">
                 <ProfilePictureAndUsername username={username}></ProfilePictureAndUsername>
             </div>
         </div>
         <div className="grid grid-rows-[9.5fr_0.5fr] mb-1">
-            <div className="overflow-y-auto flex items-end h-full">
-                <div className="flex flex-col overflow-y-auto h-fit w-full">
+            <div className="overflow-y-auto flex h-full">
+                <div id="messageContainer" className="flex flex-col justify-end h-fit w-full">
                     {
                         messages.map(message => {
                             //@ts-ignore
@@ -448,17 +456,13 @@ function popHash(url: string) {
     return url.split("#")[0];
 
 }
-function removeDuplicate(arr: any[]) {
-    const retArr: typeof arr = [];
-    if (arr) {
-        for (let i = 0; i < arr.length; i++) {
-            if (!arrayIncludesDeep(arr[i], retArr)) {
-                retArr.push(arr[i]);
-            }
-        }
-        return retArr;
-    }
-    return arr;
+function removeDuplicate<T>(arr: T[]) {
+    const set = new Set(arr)
+    const retArr: T[] = [];
+    set.forEach(s => {
+        retArr.push(s);
+    })
+    return retArr;
 }
 function arrayIncludesDeep(el: any, arr: typeof el[]) {
     if (typeof el == "object") {
