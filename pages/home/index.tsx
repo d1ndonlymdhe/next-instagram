@@ -29,7 +29,7 @@ import { Wrapper } from "../../components/Wrapper";
 import Header from "../../components/Header";
 import Spinner from "../../components/Spinner";
 
-const chatServer = "http://localhost:4000"
+const chatServer = process.env.NEXT_PUBLIC_CHATSERVER!
 const socket = io(chatServer)
 type set<T> = React.Dispatch<React.SetStateAction<T>>
 export type clientPost = {
