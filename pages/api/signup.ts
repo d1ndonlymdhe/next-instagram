@@ -25,14 +25,13 @@ export default function signup(req: NextApiRequest, res: NextApiResponse) {
             newUser.save()
             if (!fs.existsSync("./files")) {
                 fs.mkdirSync("./files");
-            } else {
-                fs.mkdir(`./files/${newUser._id}`, (err) => {
-                    if (!err) {
-                        fs.mkdir(`./files/${newUser._id}/posts`, (err) => {
-                        })
-                    }
-                });
             }
+            fs.mkdir(`./files/${newUser._id}`, (err) => {
+                if (!err) {
+                    fs.mkdir(`./files/${newUser._id}/posts`, (err) => {
+                    })
+                }
+            });
         } else {
             status = "error";
             message = {
