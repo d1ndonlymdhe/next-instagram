@@ -25,8 +25,8 @@ export default function login(req: NextApiRequest, res: NextApiResponse) {
                         hash: uniqueHash,
                     }
                     updateUser(username, { hash: uniqueHash })
+                    res.status(200).json({ status, message });
                     return;
-
                 } else {
                     message = {
                         text: "Incorrect Password"
