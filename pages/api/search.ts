@@ -6,7 +6,6 @@ export default async function search(req: NextApiRequest, res: NextApiResponse) 
     if (req.method === "GET") {
         const { searchTerm, hash } = req.query;
         const limit: number = parseInt(<string>req.query.limit!, 10);
-        console.log(typeof searchTerm)
         if (typeof searchTerm === "string") {
             const connection = await connect();
             //limit + 1 because one user may be the same as the requesting user
@@ -15,7 +14,6 @@ export default async function search(req: NextApiRequest, res: NextApiResponse) 
                 results = await User.find({ username: { $regex: searchTerm } }, "_id username").limit(limit + 1);
             }
             catch (err) {
-                console.log(err);
                 res.status(200).json({
                     status: "error", message: {
                         error: "Invalid username"

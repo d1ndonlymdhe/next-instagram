@@ -42,18 +42,15 @@ function Index() {
             const username = usernameRef.current?.value;
             const password = passwordRef.current?.value;
             if (username !== undefined && password !== undefined) {
-                console.log("ok");
                 if (!loginLoading) {
                     setLoginLoading(true)
                     axios.get(`${server}/login?username=${username}&password=${password}`).then(res => {
-                        console.log(res.data)
                         setLoginLoading(false)
                         if (res.data.status === "error") {
                             setLoginError(res.data.message.text);
                         } else {
                             setLoginError("");
                             setLoginSuccess(true);
-                            console.log(loginSuccess)
                             setHash(res.data.message.hash);
                         }
                     })

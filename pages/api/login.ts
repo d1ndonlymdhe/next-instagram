@@ -5,7 +5,6 @@ import { signUpReq, messageType } from "../../apiTypes/types";
 import sum from "hash-sum";
 
 export default function login(req: NextApiRequest, res: NextApiResponse) {
-    console.log("logging in")
     if (req.method === "GET") {
         const { username, password } = <signUpReq>req.query;
         let status = "error";
@@ -13,7 +12,6 @@ export default function login(req: NextApiRequest, res: NextApiResponse) {
             text: "unknown error"
         }
         findUser(username).then(user => {
-            console.log(user);
             if (user == null) {
                 message = {
                     text: "Incorrect Username"
@@ -27,9 +25,6 @@ export default function login(req: NextApiRequest, res: NextApiResponse) {
                         hash: uniqueHash,
                     }
                     updateUser(username, { hash: uniqueHash })
-                    // res.setHeader("Location", "/home")
-                    // res.setHeader("Set-Cookie", `hash=${uniqueHash}`)
-                    res.status(200).json({ status, message });
                     return;
 
                 } else {

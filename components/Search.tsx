@@ -88,9 +88,7 @@ export default function Search(props: SearchPropType) {
                     setFollowLoading(true)
                     if (!result.isFollowing) {
                         //try extracting logic to fucntion
-                        console.log("toFollow = ", result.username)
                         axios.post(`${server}/follow`, { hash: Cookies.get("hash"), toFollow: result.username }).then(res => {
-                            console.log("follow res = ", res);
                             if (res.data.status === "ok") {
                                 const tempResults: (typeof searchResults) = Object.assign([], searchResults);
                                 tempResults[searchResults.indexOf(result)].isFollowing = true;

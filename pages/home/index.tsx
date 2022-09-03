@@ -67,7 +67,6 @@ function Home(props: AppPropsType) {
             setActiveTab(tabHash);
             setVisitingProfile((typeof router.query.username == "string") ? router.query.username : visitingProfile)
             // setval(val + 1)
-            console.log("set tab")
         } else {
             setActiveTab("home");
         }
@@ -79,7 +78,6 @@ function Home(props: AppPropsType) {
             //if value recieved from serversideprops
             if (selfUser) {
                 const self: user = JSON.parse(selfUser);
-                console.log("subscribibg")
                 socket.emit("subscribe", { username: self.username })
                 if (self.firstLogin) {
                     window.location.href = "/"
@@ -94,7 +92,6 @@ function Home(props: AppPropsType) {
                     })
                     localStorage.messages = JSON.stringify(storedMessages);
                     const newState: typeof globalContext = { ...globalContext, username: self.username, friends: self.friendUsers, pendingMessages: storedMessages }
-                    console.log("checking = ", (newState.pendingMessages && newState.pendingMessages.length > 0))
                     if (newState.pendingMessages && newState.pendingMessages.length > 0) {
                         const roomsToBeJoinedIds = removeDuplicate(newState.pendingMessages.map(message => message.roomId))
                         socket.emit("joinRooms", { roomIds: roomsToBeJoinedIds, username: self.username })
@@ -138,14 +135,12 @@ function Home(props: AppPropsType) {
         }
         socket.on("already subscribed", subscriptionCallback);
         const roomCreationCallback = (payload: { status: string, roomId: string, members: string[] }) => {
-            console.log("room")
             const { roomId, members } = payload;
             const newState = Object.assign({}, globalContext);
             const roomAlreadyExists = newState.rooms.filter(room => room.id === roomId).length > 0
             if (!roomAlreadyExists) {
                 newState.rooms.push({ id: roomId, members: members, messages: [] })
             }
-            console.log("state to be applied = ", newState);
             globalUpdateContext(newState);
         }
         socket.on("roomCreated", roomCreationCallback);
@@ -286,7 +281,6 @@ function Chat() {
         }
     }, [socket, globalContext, globalUpdateContext])
     const initaiteChat = (username: string) => {
-        console.log("initiate Chat")
         socket.emit("createRoom", { self: globalContext.username, reciever: username });
     }
     if (chatView) {
@@ -319,8 +313,6 @@ function Chat() {
                 {
                     removeDuplicate(globalContext.rooms).map(room => {
                         const friendUsername = room.members.filter(member => { return member !== globalContext.username })[0];
-                        console.log(globalContext)
-                        console.log("friendUsername = ", room.members.filter(member => { member !== globalContext.username }));
                         return <div key={uuid()} className="my-2">
                             <ProfilePictureAndUsername username={friendUsername} onClick={() => { setSelectedUsername(friendUsername); setChatView(true) }} ActionButton="Chat" ></ProfilePictureAndUsername>
                         </div>
@@ -352,20 +344,16 @@ function ChatView(props: { username: string, room: room, setChatView: set<boolea
     const globalContext = useGlobalContext();
     const selfUsername = globalContext.username;
     const messages = room.messages;
-    console.log("rendering")
     const inputRef = useRef<HTMLInputElement>(null)
     function sendMessage() {
-        console.log("sending")
         const message = inputRef.current?.value;
         const sendThis = { from: selfUsername, to: username, message: message, roomId: room.id }
-        console.log("sendThis = ", sendThis);
         socket.emit("message", sendThis)
     }
     useEffect(() => {
         axios.post("api/removePendingMessagesFromRoom", { roomId: room.id })
     }, []);
     useEffect(() => {
-        console.log("scrolling")
         const messages = document.getElementById("messageContainer");
         const lastMessage = messages?.children[messages.children.length - 1];
         if (lastMessage) {
@@ -501,7 +489,6 @@ export async function getServerSideProps(context: { req: NextApiRequest }) {
             .populate("followerUsers", "username")
             .populate("followingUsers", "username")
             .populate("friendUsers", "username") as user;
-        console.log("requser = ", reqUser);
         if (reqUser) {
             const following = reqUser.followingUsers;
             const pendingMessagesCount = reqUser?.pendingMessages?.length;
@@ -510,7 +497,6 @@ export async function getServerSideProps(context: { req: NextApiRequest }) {
                 messages = await Message.find({ _id: { $in: reqUser.pendingMessages } });
                 await Message.deleteMany({ _id: { $in: reqUser.pendingMessages } });
                 reqUser.pendingMessages = [];
-                console.log("messages = ", messages);
             }
             reqUser.save();
             if (reqUser.firstLogin) {
@@ -571,8 +557,6 @@ export async function getServerSideProps(context: { req: NextApiRequest }) {
                         }
                     },
                 ]).sort({ postedOn: -1 });
-                console.log("returning ok")
-                // console.log("req user = ", JSON.stringify(reqUser));
                 return {
                     props: { posts: JSON.stringify(posts), selfUser: JSON.stringify(reqUser), messages: JSON.stringify(messages) }
                 }

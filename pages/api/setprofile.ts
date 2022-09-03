@@ -6,17 +6,14 @@ import Jimp from "jimp";
 export default async function setprofile(req: NextApiRequest, res: NextApiResponse) {
     const form = new formidable.IncomingForm();
     form.parse(req, async function (err, fields, files) {
-        if (err) { console.log(err) }
         const { hash, bio } = <{ hash: string; bio: string }>fields;
         const file = <formidable.File>files.profilePicture;
         const user = await findUser(undefined, hash);
         if (user) {
             fs.readFile(file.filepath, (err, data) => {
                 if (err) {
-                    console.log(err);
                 } else {
                     if (file.originalFilename) {
-                        console.log("writing file")
                         if (getExtension(file.originalFilename) !== "jpg") {
                             Jimp.read(data, (err, image) => {
                                 if (!err) {
@@ -25,7 +22,6 @@ export default async function setprofile(req: NextApiRequest, res: NextApiRespon
                             })
                         } else {
                             fs.writeFile(`./files/${user._id}/profilepicture.jpg`, data, (err) => {
-                                console.log("write err", err);
                             });
                         }
                     }

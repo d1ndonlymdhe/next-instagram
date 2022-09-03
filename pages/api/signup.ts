@@ -6,14 +6,12 @@ import User from "../../utils/User";
 import { user } from "../../utils/type"
 import sum from "hash-sum"
 export default function signup(req: NextApiRequest, res: NextApiResponse) {
-    console.log("ok");
     const { username, password } = <signUpReq>req.query;
     let status = "error";
     let message: messageType = {
         text: "Unknown error occured"
     }
     findUser(username).then(user => {
-        console.log(user);
         if (user == null) {
             status = "ok";
             message = {
@@ -27,34 +25,14 @@ export default function signup(req: NextApiRequest, res: NextApiResponse) {
             newUser.save()
             if (!fs.existsSync("./files")) {
                 fs.mkdirSync("./files");
-                console.log("files directory created")
             } else {
                 fs.mkdir(`./files/${newUser._id}`, (err) => {
-                    console.log(err);
                     if (!err) {
                         fs.mkdir(`./files/${newUser._id}/posts`, (err) => {
-                            console.log(err);
                         })
                     }
                 });
             }
-
-            // newUser(username, password).then(user => {
-            //     if (!fs.existsSync("./files")) {
-            //         fs.mkdirSync("./files");
-            //         console.log("files directory created")
-            //     } else {
-            //         fs.mkdir(`./files/${user._id}`, (err) => {
-            //             console.log(err);
-            //             if (!err) {
-            //                 fs.mkdir(`./files/${user._id}/posts`, (err) => {
-            //                     console.log(err);
-            //                 })
-            //             }
-            //         });
-            //     }
-            // })
-
         } else {
             status = "error";
             message = {

@@ -29,7 +29,6 @@ type clientUser = {
 
 //to load profile route to /home?username=username#profile
 export default function Profile(props: { username?: string }) {
-    console.log("rerender")
     const globalState = useGlobalContext();
     const selfUsername = globalState.username;
     const router = useRouter();
@@ -76,7 +75,6 @@ export default function Profile(props: { username?: string }) {
                 if (!isFollowing) {
                     //try extracting logic to fucntion
                     axios.post(`${server}/follow`, { hash: Cookies.get("hash"), toFollow: username }).then(res => {
-                        console.log("follow res = ", res);
                         if (res.data.status === "ok") {
                             setFollowLoading(false)
                             const tempUserInfo = Object.assign({}, userInfo);

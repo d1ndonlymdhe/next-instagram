@@ -60,7 +60,6 @@ export default function Profile(props: ProfileProps) {
                 if (!isFollowing) {
                     //try extracting logic to fucntion
                     axios.post(`${server}/follow`, { hash: Cookies.get("hash"), toFollow: username }).then(res => {
-                        console.log("follow res = ", res);
                         if (res.data.status === "ok") {
                             setFollowLoading(false)
                             const tempUserInfo = Object.assign({}, userInfo);
@@ -243,7 +242,6 @@ export default function Profile(props: ProfileProps) {
 export async function getServerSideProps(context: { req: NextApiRequest, res: NextApiResponse, params: { username: string } }) {
     const { username } = context.params;
     const hash = context.req.cookies.hash!;
-    console.log(hash)
     if (hash) {
         if (username) {
             const connection = await connect()

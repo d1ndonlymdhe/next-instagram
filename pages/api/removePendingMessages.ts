@@ -10,8 +10,6 @@ export default async function removePendingMessages(req: NextApiRequest, res: Ne
             const user = await User.findOne({ hash: hash }) as user;
             const pendingMessageIds = user.pendingMessages;
             const remove = await Message.deleteMany({ _id: { $in: pendingMessageIds } })
-            console.log("Delete Result", remove);
-            console.log("delete these messages = ", pendingMessageIds);
             user.pendingMessages = [];
             user.save();
             res.send("ok");

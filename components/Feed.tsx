@@ -54,7 +54,6 @@ export function FeedPost(props: { post: clientPost, selfUsername?: string, setPo
     const { setPosts, posts, setToast } = props;
     const [post, setPost] = useState(props.post)
     const [selfUsername, setSelfUsername] = useState(useGlobalContext().username || props.selfUsername);
-    console.log(post)
     const [isLiked, setIsLiked] = useState(selfUsername ? (post.likedByUsernames.filter(user => user.username === selfUsername).length > 0) : false);
     const [showLikedBy, setShowLikedBy] = useState(false);
     const [likeLoading, setLikeLoading] = useState(false);

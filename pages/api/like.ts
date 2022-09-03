@@ -18,7 +18,6 @@ export default async function like(req: NextApiRequest, res: NextApiResponse) {
                         await selectedPost.save();
                         res.status(200).json({ status: "ok", message: { liked: false } });
                     } else {
-                        console.log("liked")
                         selectedPost.likedBy.push(user._id);
                         selectedPost.likes = selectedPost.likedBy.length;
                         await selectedPost.save();

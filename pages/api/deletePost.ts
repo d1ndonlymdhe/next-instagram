@@ -14,13 +14,10 @@ export default async function deletePost(req: NextApiRequest, res: NextApiRespon
             if (reqUser.posts.includes(postId)) {
                 const deletedPost = await Post.findByIdAndDelete(postId) as post;
                 fs.unlink(`./files/${reqUser._id}/posts/${postId}/image.jpg`, (err) => {
-                    console.log(err)
                     if (!err) {
-                        fs.rmdir(`./files/${reqUser._id}/posts/${postId}`, (err) => { console.log(err) })
                     }
                 })
                 reqUser.posts = reqUser.posts.filter(post => {
-                    console.log(post, " ", postId, " ", post === postId)
                     return post !== deletedPost._id;
                 })
                 reqUser.save();

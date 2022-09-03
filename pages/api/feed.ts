@@ -74,6 +74,5 @@ export default async function getPosts(req: NextApiRequest, res: NextApiResponse
     } else {
         res.status(200).json({ status: "error", message: "Invalid Request" });
     }
-    // console.log("ok");
     // res.status(200).json({ status: "error", posts: flatPost });
 }

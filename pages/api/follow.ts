@@ -15,9 +15,6 @@ export default async function follow(req: NextApiRequest, res: NextApiResponse) 
         if (selectedUser) {
             if (toFollowUser) {
                 const toFollowId = toFollowUser._id;
-                console.log("inside follow ts");
-                console.log("selected user: ", selectedUser);
-                console.log("following user: ", toFollowUser)
                 //@ts-ignore
                 if (selectedUser.followingUsers.includes(toFollowId)) {
                     res.status(200).json({ status: "error", message: { text: "Already following" } })

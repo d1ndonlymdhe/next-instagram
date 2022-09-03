@@ -16,7 +16,6 @@ export default async function unfollow(req: NextApiRequest, res: NextApiResponse
         if (selectedUser) {
             if (toUnFollowUser) {
                 const toUnFollowId = toUnFollowUser._id;
-                console.log("To Unfollow : ", toUnFollowUser);
                 if (!selectedUser.followingUsers.includes(toUnFollowId)) {
                     res.status(200).json({ status: "error", message: { text: "Already Not Following" } })
                 } else {

@@ -34,7 +34,6 @@ export async function getServerSideProps(context: { req: NextApiRequest }) {
     const reqUser = await User.findOne({ hash: hash }) as user;
     if (reqUser) {
       if (reqUser.firstLogin) {
-        console.log("first login")
         return {
           redirect: {
             permanent: false,
@@ -42,7 +41,6 @@ export async function getServerSideProps(context: { req: NextApiRequest }) {
           }
         }
       } else {
-        console.log("not first login")
         return {
           redirect: {
             permanent: false,
@@ -52,7 +50,6 @@ export async function getServerSideProps(context: { req: NextApiRequest }) {
       }
     }
   } else {
-    console.log("no hash")
     return {
       redirect: {
         permanent: false,

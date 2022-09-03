@@ -5,7 +5,6 @@ import User from "../../utils/User";
 
 export default async function getPostsFromUser(req: NextApiRequest, res: NextApiResponse) {
     const { username } = <{ username: string }>req.query!
-    console.log("username = ", username);
     if (username) {
         const user = await User.findOne({ username });
         if (user) {
