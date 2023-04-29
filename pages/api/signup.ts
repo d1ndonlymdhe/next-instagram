@@ -27,8 +27,12 @@ export default function signup(req: NextApiRequest, res: NextApiResponse) {
             fs.mkdir(`./files/${newUser._id}`, (err) => {
                 if (!err) {
                     fs.mkdir(`./files/${newUser._id}/posts`, (err) => {
+                        if (err) {
+                            res.status(400).json({ err: "NO folder" })
+                        }
                     })
                 }
+                res.status(400).json({ err: "NO folder" })
             });
         } else {
             status = "error";
