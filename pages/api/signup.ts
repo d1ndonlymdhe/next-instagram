@@ -11,6 +11,7 @@ export default function signup(req: NextApiRequest, res: NextApiResponse) {
     let message: messageType = {
         text: "Unknown error occured"
     }
+    res.send("ok")
     findUser(username).then(user => {
         if (user == null) {
             status = "ok";
