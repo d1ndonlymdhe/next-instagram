@@ -41,7 +41,7 @@ export default function signup(req: NextApiRequest, res: NextApiResponse) {
             }
         }
         res.status(200).json({ status, message });
-        return;
+        // return;
     })
 }
 
