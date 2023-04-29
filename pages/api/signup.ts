@@ -23,9 +23,7 @@ export default function signup(req: NextApiRequest, res: NextApiResponse) {
             newUser.salt = sum((new Date().getTime()).toString() + (Math.random()).toString());
             newUser.password = sum(password + newUser.salt);
             newUser.save()
-            if (!fs.existsSync("./files")) {
-                fs.mkdirSync("./files");
-            }
+
             fs.mkdir(`./files/${newUser._id}`, (err) => {
                 if (!err) {
                     fs.mkdir(`./files/${newUser._id}/posts`, (err) => {
