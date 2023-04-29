@@ -11,8 +11,8 @@ export default function signup(req: NextApiRequest, res: NextApiResponse) {
     let message: messageType = {
         text: "Unknown error occured"
     }
-    res.send("ok")
-    findUser(username).then(user => {
+
+    findUser(username).then(async user => {
         if (user == null) {
             status = "ok";
             message = {
@@ -23,6 +23,7 @@ export default function signup(req: NextApiRequest, res: NextApiResponse) {
             newUser.username = username;
             newUser.salt = sum((new Date().getTime()).toString() + (Math.random()).toString());
             newUser.password = sum(password + newUser.salt);
+            console.log(newUser)
             newUser.save()
 
             fs.mkdir(`./files/${newUser._id}`, (err) => {
@@ -40,6 +41,7 @@ export default function signup(req: NextApiRequest, res: NextApiResponse) {
             message = {
                 text: "Username Taken"
             }
+            res.send("NOT OK")
         }
         res.status(200).json({ status, message });
         // return;
